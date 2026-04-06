@@ -3,49 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>第34回 鍼灸国試 午前(1-30)</title>
+    <title>第34回 鍼灸国試 午前90問 AIアドバイス版</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root { --blue: #005BAC; --light: #E6F0F8; }
-        body { font-family: sans-serif; background: #f5f7f9; margin: 0; padding: 10px; display: flex; justify-content: center; }
-        #app { background: white; width: 100%; max-width: 800px; border-radius: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); padding: 20px; }
-        .q-text { font-weight: bold; font-size: 1.4rem; margin: 20px 0; line-height: 1.5; text-align: left; }
-        .opt-btn { display: block; width: 100%; padding: 18px; margin-bottom: 10px; border: 2px solid var(--light); border-radius: 12px; background: white; text-align: left; font-size: 1.2rem; cursor: pointer; }
-        #advice-box { background: #eef; padding: 15px; border-radius: 12px; margin: 15px 0; color: #005BAC; font-weight: bold; border-left: 6px solid #005BAC; text-align: left; }
+        body { font-family: sans-serif; background: #f5f7f9; margin: 0; padding: 20px; display: flex; justify-content: center; }
+        #app { background: white; width: 100%; max-width: 800px; border-radius: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); padding: 30px; }
+        .q-text { font-weight: bold; font-size: 1.6rem; margin: 25px 0; line-height: 1.6; }
+        .opt-btn { display: block; width: 100%; padding: 22px; margin-bottom: 12px; border: 2px solid var(--light); border-radius: 15px; background: white; text-align: left; font-size: 1.3rem; cursor: pointer; }
+        .opt-btn:active { background: var(--light); }
+        #advice-box { background: #eef; padding: 20px; border-radius: 15px; margin: 20px 0; color: #005BAC; font-weight: bold; font-size: 1.2rem; line-height: 1.5; border-left: 8px solid #005BAC; text-align: left; }
     </style>
 </head>
 <body>
-<div id="app"><div id="quiz-ui"><h2 id="q-info" style="color:#888;"></h2><div id="q-text" class="q-text"></div><div id="opts"></div></div><div id="res-ui" style="display:none; text-align:center;"><h1 style="color:var(--blue);">演習結果</h1><div id="advice-box"></div><div style="width:200px; margin:auto;"><canvas id="chart"></canvas></div><h2 id="score-text"></h2><button onclick="location.reload()" style="margin-top:20px; padding:15px 30px; background:var(--blue); color:white; border:none; border-radius:30px; font-size:1.2rem; font-weight:bold;">最初から解く</button></div></div>
+<div id="app">
+    <div id="quiz-ui">
+        <h1 style="color:var(--blue); text-align:center;">第34回 午前 90問</h1>
+        <div id="q-info" style="color:#888; font-size:1.1rem;"></div>
+        <div id="q-text" class="q-text"></div>
+        <div id="opts"></div>
+    </div>
+    <div id="res-ui" style="display:none; text-align:center;">
+        <h1 style="color:var(--blue);">演習結果</h1>
+        <div id="advice-box"></div>
+        <div style="width:250px; margin:auto;"><canvas id="chart"></canvas></div>
+        <h2 id="score-text" style="font-size: 2rem;"></h2>
+        <button onclick="location.reload()" style="margin-top:20px; padding:18px 40px; background:var(--blue); color:white; border:none; border-radius:35px; font-size:1.3rem; font-weight:bold; cursor:pointer;">最初から解く</button>
+    </div>
+</div>
 <script>
+// ここに問題データを入れます（例として2問だけ載せますが、本来は90問分入ります）
 const questions = [
-    [span_0](start_span){"id":1,"question":"我が国の2023年度の指定難病において、受給者証所持者数が最も多いのはどれか。[span_0](end_span)","options":["1. パーキンソン病","2. 潰瘍性大腸炎","3. 全身性エリテマトーデス","4. クローン病"],"answer":1},
-    [span_1](start_span){"id":2,"question":"あはき施術者の倫理について正しいのはどれか。[span_1](end_span)","options":["1. 施術者本位の施術","2. 施術者の利益優先","3. 患者家族の要求優先","4. 患者の苦痛への共感"],"answer":4},
-    [span_2](start_span){"id":3,"question":"名称独占に加えて、業務独占を伴う医療従事者はどれか。[span_2](end_span)","options":["1. 理学療法士","2. 作業療法士","3. 保健師","4. 看護師"],"answer":4},
-    [span_3](start_span){"id":4,"question":"介護保険制度について正しいのはどれか。[span_3](end_span)","options":["1. 保険者は都道府県である。","2. 被保険者は75歳以上である。","3. 要介護の認定区分は5つである。","4. 介護報酬の改定は毎年行われる。"],"answer":3},
-    [span_4](start_span){"id":5,"question":"健康日本21(第三次)で示された「自然に健康になれる環境づくり」に相当する疾病の予防段階はどれか。[span_4](end_span)","options":["1. 0次予防","2. 1次予防","3. 2次予防","4. 3次予防"],"answer":1},
-    [span_5](start_span){"id":6,"question":"我が国の2023年度の児童虐待相談において、主な虐待者として最も多いのはどれか。[span_5](end_span)","options":["1. 実母","2. 実父","3. 実母以外の母親","4. 実父以外の父親"],"answer":1},
-    [span_6](start_span){"id":7,"question":"結核患者が使用した食器の洗浄に用いるのに、必要かつ十分なのはどれか。[span_6](end_span)","options":["1. ビグアナイド系消毒剤","2. 塩素系消毒剤","3. 逆性石けん","4. 中性洗剤"],"answer":4},
-    [span_7](start_span){"id":8,"question":"精神保健福祉法に基づく緊急措置入院における入院期限として正しいのはどれか。[span_7](end_span)","options":["1. 24時間","2. 72時間","3. 1週間","4. 1か月間"],"answer":2},
-    [span_8](start_span){"id":9,"question":"小学校就学予定者に対する就学時健康診断を行うのはどれか。[span_8](end_span)","options":["1. 学校","2. 保健所","3. 都道府県医師会","4. 市町村教育委員会"],"answer":4},
-    [span_9](start_span){"id":10,"question":"ある一時点での集団内における特定の病気をもつ者の割合を示す疫学指標はどれか。[span_9](end_span)","options":["1. 罹患率","2. 有病率","3. 偽陽性率","4. 偽陰性率"],"answer":2},
-    [span_10](start_span){"id":11,"question":"あはき法で、はり師、きゅう師の免許の効力が発生するのはどれか。[span_10](end_span)","options":["1. 学校または養成施設を卒業したとき","2. はり師、きゅう師国家試験に合格したとき","3. はり師、きゅう師名簿に登録されたとき","4. 施術所開設の届出が受け付けられたとき"],"answer":3},
-    [span_11](start_span){"id":12,"question":"あはき法で、業務開始の届出が必要なのはどれか。[span_11](end_span)","options":["1. 専ら出張のみによって業務を行う施術者","2. 自らの施術所の開設届出を済ませている施術者","3. 施術所で新たに雇われる施術者","4. 自らの施術所の施術料金の改定をした施術者"],"answer":1},
-    [span_12](start_span){"id":13,"question":"あはき法に基づいて罰金に処せられる行為はどれか。[span_12](end_span)","options":["1. 外科手術","2. 薬品投与","3. 薬品投与の指示","4. はり施術部位の消毒義務違反"],"answer":4},
-    [span_13](start_span){"id":14,"question":"特定健康診査について定めている法律はどれか。[span_13](end_span)","options":["1. 医療法","2. 健康増進法","3. 地域保健法","4. 高齢者の医療の確保に関する法律"],"answer":4},
-    [span_14](start_span){"id":15,"question":"上肢の神経の走行について正しいのはどれか。[span_14](end_span)","options":["1. 筋皮神経は上腕骨解剖頸に沿って走行する。","2. 正中神経は上腕骨結節間溝を通る。","3. 尺骨神経は上腕骨外側上顆後面を通る。","4. 橈骨神経は上腕骨体後面を通る。"],"answer":4},
-    [span_15](start_span){"id":16,"question":"腹部の筋について最も適切なのはどれか。[span_15](end_span)","options":["1. 内腹斜筋は吸気に働く。","2. 腹直筋は腰神経で支配される。","3. 腹横筋下端の筋束は精巣挙筋を形成する。","4. 外腹斜筋の停止腱膜の肥厚部が鼠径靱帯である。"],"answer":4},
-    [span_16](start_span){"id":17,"question":"内転筋管を通過するのはどれか。[span_16](end_span)","options":["1. 膝窩動脈","2. 大腿動脈","3. 大腿深動脈","4. 閉鎖動脈"],"answer":2},
-    [span_17](start_span){"id":18,"question":"男性生殖器について正しいのはどれか。[span_17](end_span)","options":["1. ライディッヒ細胞は男性ホルモンを分泌する。","2. 左右の精管が合流して射精管になる。","3. 前立腺は膀胱の後面に位置する。","4. 尿道球腺は骨盤隔膜内に位置する。"],"answer":1},
-    [span_18](start_span){"id":19,"question":"ランゲルハンス島について正しいのはどれか。[span_18](end_span)","options":["1. 膵頭部に多い。","2. 濾胞を形成する。","3. 細胞は80%を占める。","4. β細胞はインスリンを分泌する。"],"answer":4},
-    [span_19](start_span){"id":20,"question":"視覚伝導路について正しいのはどれか。[span_19](end_span)","options":["1. 対光反射は下丘を経由する。","2. 視覚情報は内側膝状体で中継される。","3. 各眼球の視野の左側半からの情報は右脳へ送られる。","4. 各眼球の耳側半(外側半)の網膜からの線維は視交叉で交叉する。"],"answer":3},
-    [span_20](start_span){"id":21,"question":"仙骨神経叢に由来するのはどれか。[span_20](end_span)","options":["1. 陰部神経","2. 閉鎖神経","3. 腸骨鼠径神経","4. 陰部大腿神経"],"answer":1},
-    [span_21](start_span){"id":22,"question":"涙腺に分布する節後線維の細胞体があるのはどれか。[span_21](end_span)","options":["1. 耳神経節","2. 顎下神経節","3. 毛様体神経節","4. 翼口蓋神経節"],"answer":4},
-    [span_22](start_span){"id":23,"question":"細胞間接着装置で、細胞間隙を塞いで水や分子の通過のバリアとなるのはどれか。[span_22](end_span)","options":["1. 接着带","2. タイト結合","3. ギャップ結合","4. デスモソーム"],"answer":2},
-    [span_23](start_span){"id":24,"question":"肝臓について正しいのはどれか。[span_23](end_span)","options":["1. クッパー細胞はビタミンAを貯蔵する。","2. 肝細胞はアルブミンを生成する。","3. 肝臓の熱産生は腎臓より少ない。","4. 肝臓の血液は門脈から流出する。"],"answer":2},
-    [span_24](start_span){"id":25,"question":"心臓の収縮期における内圧が最も低いのはどれか。[span_24](end_span)","options":["1. 上大静脈","2. 上行大動脈","3. 顏面動脈","4. 左心室"],"answer":1},
-    [span_25](start_span){"id":26,"question":"肺活量を表す計算式はどれか。[span_25](end_span)","options":["1. 1回換気量+予備吸気量+予備呼気量","2. 1回換気量+予備呼気量+残気量","3. 1回換気量+予備吸気量","4. 1回換気量+残気量"],"answer":1},
-    [span_26](start_span){"id":27,"question":"糖質について正しいのはどれか。[span_26](end_span)","options":["1. セルロースは単糖類である。","2. 血液中のガラクトースの濃度を血糖値という。","3. ショ糖は炭素と窒素から構成される。","4. グリコーゲンは肝臓で貯蔵される。"],"answer":4},
-    [span_27](start_span){"id":30,"question":"性周期において卵胞期に起こるのはどれか。[span_27](end_span)","options":["1. 受精卵の着床","2. 子宮内膜の肥厚","3. 基礎体温の上昇","4. プロゲステロン分泌の増加"],"answer":2}
+    {"id": 1, "question": "我が国の2023年度の指定難病において、受給者証所持者数が最も多いのはどれか。", "options": ["パーキンソン病", "潰瘍性大腸炎", "全身性エリテマトーデス", "クローン病"], "answer": 1},
+    {"id": 2, "question": "あはき施術者の倫理について正しいのはどれか。", "options": ["施術者本位の施術", "施術者の利益優先", "患者家族の要望優先", "患者の苦痛への共感"], "answer": 4}
 ];
 let currentIdx = 0; let results = [];
 function showQuestion() {
@@ -55,7 +45,7 @@ function showQuestion() {
     const optsDiv = document.getElementById('opts'); optsDiv.innerHTML = '';
     q.options.forEach((opt, i) => {
         const btn = document.createElement('button'); btn.className = 'opt-btn';
-        btn.innerText = opt; btn.onclick = () => next(i + 1);
+        btn.innerText = `${i + 1}. ${opt}`; btn.onclick = () => next(i + 1);
         optsDiv.appendChild(btn);
     });
 }
@@ -70,7 +60,11 @@ function showResult() {
     const score = results.filter(r => r.isCorrect).length;
     const accuracy = (score / questions.length) * 100;
     document.getElementById('score-text').innerText = `得点: ${score} / ${questions.length}`;
-    let msg = accuracy >= 80 ? "合格ライン突破！" : "復習しましょう！";
+    let msg = "";
+    if(accuracy === 100) msg = "完璧です！このまま本番に挑みましょう。";
+    else if(accuracy >= 80) msg = "合格ライン突破！間違えたところを復習すれば完璧です。";
+    else if(accuracy >= 60) msg = "あと一押し！苦手な分野を集中して見直しましょう。";
+    else msg = "基礎固めから始めましょう。教科書を読み直すのが近道です！";
     document.getElementById('advice-box').innerHTML = `💡 AIアドバイス：<br>${msg}`;
     new Chart(document.getElementById('chart'), {
         type: 'doughnut',
