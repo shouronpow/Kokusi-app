@@ -284,43 +284,51 @@ function show() {
 function finish() {
     document.getElementById('quiz-ui').style.display = 'none';
     document.getElementById('res-ui').style.display = 'block';
+    
     let ok = 0;
+    const stats = {}; // 科目ごとの集計用
     const list = document.getElementById('review-list'); list.innerHTML = '';
     
     currentSet.forEach((q, i) => {
         const userAns = results[i];
-        if(!userAns) return; // 未回答は表示しない
+        if(!userAns) return;
         
         const isOk = userAns === q.a;
         if(isOk) ok++;
         
+        // 科目別の集計
+        if(!stats[q.s]) stats[q.s] = { ok: 0, total: 0 };
+        stats[q.s].total++;
+        if(isOk) stats[q.s].ok++;
+        
         const card = document.createElement('div');
         card.className = `card ${isOk ? 'ok' : 'ng'}`;
-        card.innerHTML = `<strong>${isOk ? '○' : '×'} 問${q.q.match(/問(\d+)/)[1]}</strong><br>${q.q}<br><small style="display:block; margin-top:5px; border-top:1px solid rgba(0,0,0,0.1); padding-top:5px;">正解: ${q.o[q.a-1]}</small>`;
+        card.innerHTML = `<strong>${isOk ? '○' : '×'} 問${q.q.match(/問(\d+)/)[1]}</strong> 【${q.s}】<br>${q.q}<br><small style="display:block; margin-top:5px; border-top:1px solid rgba(0,0,0,0.1); padding-top:5px;">正解: ${q.o[q.a-1]}</small>`;
         list.appendChild(card);
     });
+
+    // 科目別スコアの表示作成
+    let statsHtml = '<table style="width:100%; margin-top:20px; border-collapse:collapse; text-align:left;">';
+    statsHtml += '<tr style="border-bottom:2px solid #005BAC;"><th>科目</th><th>正答率</th><th>正解数</th></tr>';
+    for(let s in stats) {
+        const rate = Math.round((stats[s].ok / stats[s].total) * 100);
+        statsHtml += `<tr style="border-bottom:1px solid #ddd; height:40px;"><td>${s}</td><td>${rate}%</td><td>${stats[s].ok}/${stats[s].total}</td></tr>`;
+    }
+    statsHtml += '</table>';
 
     const total = results.length;
     const p = total === 0 ? 0 : Math.round((ok/total)*100);
     document.getElementById('score-text').innerText = `${p}% (${ok} / ${total}問中)`;
     
-    let msg = "";
-    if(p >= 80) msg = "【AI診断：合格圏内】素晴らしい！基礎から応用まで完璧に固まっています。この調子で本試験も突破しましょう！";
-    else if(p >= 60) msg = "【AI診断：合格ライン】まずは6割突破おめでとうございます！間違えた問題を復習すれば、さらに盤石になります。";
-    else msg = "【AI診断：基礎強化が必要】焦らず、まずは教科書で間違えた分野を再確認しましょう。一つ一つの積み重ねが合格への近道です！";
-    
-    document.getElementById('ai-advice').innerHTML = `💡 AI診断アドバイス：<br>${msg}`;
+    let msg = p >= 60 ? "合格ライン突破！" : "基礎を固めましょう。";
+    document.getElementById('ai-advice').innerHTML = `💡 科目別分析：${statsHtml}<br>AI診断：${msg}`;
 
     new Chart(document.getElementById('chart'), {
         type: 'doughnut',
-        data: {
-            datasets: [{
-                data: [ok, total - ok],
-                backgroundColor: ['#005BAC', '#ddd'],
-                borderWidth: 0
-            }]
-        },
+        data: { datasets: [{ data: [ok, total - ok], backgroundColor: ['#005BAC', '#ddd'], borderWidth: 0 }] },
         options: { cutout: '75%' }
+   
+        
     });
 }
 </script>
