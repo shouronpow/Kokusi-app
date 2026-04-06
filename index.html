@@ -1,85 +1,165 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>第34回 鍼灸国試 完全版</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        :root { --blue: #005BAC; --light: #E6F0F8; --red: #dc3545; }
-        body { font-family: sans-serif; background: #f5f7f9; margin: 0; padding: 10px; display: flex; justify-content: center; }
-        #app { background: white; width: 100%; max-width: 800px; border-radius: 20px; padding: 20px; text-align: center; }
-        .q-text { font-weight: bold; font-size: 1.3rem; margin: 20px 0; text-align: left; }
-        .opt-btn { display: block; width: 100%; padding: 16px; margin-bottom: 10px; border: 2px solid var(--light); border-radius: 12px; background: white; text-align: left; font-size: 1.1rem; }
-        #review-container { text-align: left; margin: 20px 0; padding: 15px; border: 2px solid var(--red); border-radius: 15px; background: #fffafa; }
-        .review-ans { color: var(--red); font-weight: bold; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第34回 鍼灸国試 午前90問 完全版</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+:root { --blue: #005BAC; --light: #E6F0F8; }
+body { font-family: sans-serif; background: #f5f7f9; margin: 0; padding: 20px; display: flex; justify-content: center; }
+#app { background: white; width: 100%; max-width: 800px; border-radius: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); padding: 30px; }
+.q-text { font-weight: bold; font-size: 1.6rem; margin: 25px 0; line-height: 1.6; }
+.opt-btn { display: block; width: 100%; padding: 22px; margin-bottom: 12px; border: 2px solid var(--light); border-radius: 15px; background: white; text-align: left; font-size: 1.3rem; cursor: pointer; }
+.opt-btn:active { background: var(--light); }
+#review-list { max-height: 500px; overflow-y: auto; margin-top: 20px; border-top: 2px solid var(--light); }
+.card { padding: 20px; margin-bottom: 10px; border-radius: 12px; border-left: 8px solid; text-align: left; }
+.ok { background: #d4edda; border-color: #28a745; }
+.ng { background: #f8d7da; border-color: #dc3545; }
+</style>
 </head>
 <body>
 <div id="app">
-    <div id="quiz-ui">
-        <h2 id="q-info" style="color:#888;"></h2>
-        <div id="q-text" class="q-text">読み込み中...</div>
-        <div id="opts"></div>
-    </div>
-    <div id="res-ui" style="display:none;">
-        <h1 style="color:var(--blue);">演習結果</h1>
-        <h2 id="score-text"></h2>
-        <div style="width:180px; height:180px; margin:auto;"><canvas id="chart"></canvas></div>
-        <div id="review-container">
-            <h3 style="color:var(--red); text-align:center;">🚩 間違えた問題の復習</h3>
-            <div id="wrong-answers-list"></div>
-        </div>
-        <button onclick="location.reload()" style="margin-top:20px; padding:15px 30px; background:var(--blue); color:white; border:none; border-radius:30px; font-weight:bold;">最初から解く</button>
-    </div>
+<div id="quiz-ui">
+<h1 style="color:var(--blue); text-align:center;">第34回 午前 90問</h1>
+<div id="q-info" style="color:#888; font-size:1.1rem;"></div>
+<div id="q-text" class="q-text"></div>
+<div id="opts"></div>
+</div>
+<div id="res-ui" style="display:none; text-align:center;">
+<h1 style="color:var(--blue);">演習結果</h1>
+<div style="width:250px; margin:auto;"><canvas id="chart"></canvas></div>
+<h2 id="score-text" style="font-size: 2rem;"></h2>
+<div id="review-list"></div>
+<button onclick="location.reload()" style="margin-top:20px; padding:18px 40px; background:var(--blue); color:white; border:none; border-radius:35px; font-size:1.3rem; font-weight:bold; cursor:pointer;">最初から解く</button>
+</div>
 </div>
 <script>
 const questions = [
-    {"q":"問1 指定難病で受給者証所持者数が最も多いのは？","o":["1.パーキンソン病","2.潰瘍性大腸炎","3.全身性エリテマトーデス","4.クローン病"],"a":1},
-    {"q":"問2 あはき施術者の倫理について正しいのは？","o":["1.施術者本位","2.利益優先","3.患者家族の要求優先","4.患者の苦痛への共感"],"a":4},
-    {"q":"問3 業務独占を伴う医療従事者はどれか？","o":["1.理学療法士","2.作業療法士","3.保健師","4.看護師"],"a":4},
-    {"q":"問4 介護保険制度について正しいのはどれか？","o":["1.保険者は都道府県","2.被保険者は75歳以上","3.要介護の認定区分は5つ","4.報酬の改定は毎年"],"a":3},
-    {"q":"問5 健康日本21(第三次)の環境づくりは何次予防？","o":["1.0次予防","2.1次予防","3.2次予防","4.3次予防"],"a":1},
-    {"q":"問6 児童虐待相談において主な虐待者として最も多いのは？","o":["1.実母","2.実父","3.実母以外の母親","4.実父以外の父親"],"a":1},
-    {"q":"問7 結核患者が使用した食器の洗浄に必要かつ十分なのは？","o":["1.ビグアナイド系","2.塩素系","3.逆性石けん","4.中性洗剤"],"a":4},
-    {"q":"問8 緊急措置入院における入院期限は？","o":["1.24時間","2.72時間","3.1週間","4.1か月間"],"a":2},
-    {"q":"問9 就学時健康診断を行うのは？","o":["1.学校","2.保健所","3.都道府県医師会","4.市町村教育委員会"],"a":4},
-    {"q":"問10 特定の病気をもつ者の割合を示す疫学指標は？","o":["1.罹患率","2.有病率","3.偽陽性率","4.偽陰性率"],"a":2}
+{ "id": 1, "question": "我が国の2023年度の指定難病において、受給者証所持者数が最も多いのはどれか。", "options": ["パーキンソン病", "潰瘍性大腸炎", "全身性エリテマトーデス", "クローン病"], "answer": 1 },
+{ "id": 2, "question": "あはき施術者の倫理について正しいのはどれか。", "options": ["施術者本位の施術", "施術者の利益優先", "患者家族の要求優先", "患者の苦痛への共感"], "answer": 4 },
+{ "id": 3, "question": "名称独占に加えて、業務独占を伴う医療従事者はどれか。", "options": ["理学療法士", "作業療法士", "保健師", "看護師"], "answer": 4 },
+{ "id": 4, "question": "介護保険制度について正しいのはどれか。", "options": ["保険者は都道府県である。", "被保険者は75歳以上である。", "要介護の認定区分は5つである。", "介護報酬の改定は毎年行われる。"], "answer": 3 },
+{ "id": 5, "question": "健康日本21(第三次)で示された「自然に健康になれる環境づくり」に相当する疾病の予防段階はどれか。", "options": ["0次予防", "1次予防", "2次予防", "3次予防"], "answer": 1 },
+{ "id": 6, "question": "我が国の2023年度の児童虐待相談において、主な虐待者として最も多いのはどれか。", "options": ["実母", "実父", "実母以外の母親", "実父以外の父親"], "answer": 1 },
+{ "id": 7, "question": "結核患者が使用した食器の洗浄に用いるのに、必要かつ十分なのはどれか。", "options": ["ビグアナイド系消毒剤", "塩素系消毒剤", "逆性石けん", "中性洗剤"], "answer": 4 },
+{ "id": 8, "question": "精神保健福祉法に基づく緊急措置入院における入院期限として正しいのはどれか。", "options": ["24時間", "72時間", "1週間", "1か月間"], "answer": 2 },
+{ "id": 9, "question": "小学校就学予定者に対する就学時健康診断を行うのはどれか。", "options": ["学校", "保健所", "都道府県医師会", "市町村教育委員会"], "answer": 4 },
+{ "id": 10, "question": "ある一時点での集団内における特定の病気をもつ者の割合を示す疫学指標はどれか。", "options": ["罹患率", "有病率", "偽陽性率", "偽陰性率"], "answer": 2 },
+{ "id": 11, "question": "あはき法で、はり師、きゅう師の免許の効力が発生するのはどれか。", "options": ["学校または養成施設を卒業したとき", "はり師、きゅう師国家試験に合格したとき", "はり師、きゅう師名簿に登録されたとき", "施術所開設の届出が受け付けられたとき"], "answer": 3 },
+{ "id": 12, "question": "あはき法で、業務開始の届出が必要なのはどれか。", "options": ["専ら出張のみによって業務を行う施術者", "自らの施術所の開設届出を済ませている施術者", "施術所で新たに雇われる施術者", "自らの施術所の施術料金の改定をした施術者"], "answer": 1 },
+{ "id": 13, "question": "あはき法に基づいて罰金に処せられる行為はどれか。", "options": ["外科手術", "薬品投与", "薬品投与の指示", "はり施術部位の消毒義務違反"], "answer": 4 },
+{ "id": 14, "question": "特定健康診査について定めている法律はどれか。", "options": ["医療法", "健康増進法", "地域保健法", "高齢者の医療の確保に関する法律"], "answer": 4 },
+{ "id": 15, "question": "上肢の神経の走行について正しいのはどれか。", "options": ["筋皮神経は上腕骨解剖頸に沿って走行する。", "正中神経は上腕骨結節間溝を通る。", "尺骨神経は上腕骨外側上顆後面を通る。", "橈骨神経は上腕骨体後面を通る。"], "answer": 4 },
+{ "id": 16, "question": "腹部の筋について最も適切なのはどれか。", "options": ["内腹斜筋は吸気に働く。", "腹直筋は腰神経で支配される。", "腹横筋下端の筋束は精巣挙筋を形成する。", "外腹斜筋の停止腱膜の肥厚部が鼠径靱帯である。"], "answer": 4 },
+{ "id": 17, "question": "内転筋管を通過するのはどれか。", "options": ["膝窩動脈", "大腿動脈", "大腿深動脈", "閉鎖動脈"], "answer": 2 },
+{ "id": 18, "question": "男性生殖器について正しいのはどれか。", "options": ["ライディッヒ細胞は男性ホルモンを分泌する。", "左右の精管が合流して射精管になる。", "前立腺は膀胱の後面に位置する。", "尿道球腺は骨盤隔膜内に位置する。"], "answer": 1 },
+{ "id": 19, "question": "ランゲルハンス島について正しいのはどれか。", "options": ["膵頭部に多い。", "濾胞を形成する。", "細胞は80%を占める。", "β細胞はインスリンを分泌する。"], "answer": 4 },
+{ "id": 20, "question": "視覚伝導路について正しいのはどれか。", "options": ["対光反射は下丘を経由する。", "視覚情報は内側膝状体で中継される。", "各眼球の視野の左側半からの情報は右脳へ送られる。", "各眼球の耳側半(外側半)の網膜からの線維は視交叉で交叉する。"], "answer": 3 },
+{ "id": 21, "question": "仙骨神経叢に由来するのはどれか。", "options": ["陰部神経", "閉鎖神経", "腸骨鼠径神経", "陰部大腿神経"], "answer": 1 },
+{ "id": 22, "question": "涙腺に分布する節後線維の細胞体があるのはどれか。", "options": ["耳神経節", "顎下神経節", "毛様体神経節", "翼口蓋神経節"], "answer": 4 },
+{ "id": 23, "question": "細胞間接着装置で、細胞間隙を塞いで水や分子の通過のバリアとなるのはどれか。", "options": ["接着带", "タイト結合", "ギャップ結合", "デスモソーム"], "answer": 2 },
+{ "id": 24, "question": "肝臓について正しいのはどれか。", "options": ["クッパー細胞はビタミンAを貯蔵する。", "肝細胞はアルブミンを生成する。", "肝臓の熱産生は腎臓より少ない。", "肝臓の血液は門脈から流出する。"], "answer": 2 },
+{ "id": 25, "question": "心臓の収縮期における内圧が最も低いのはどれか。", "options": ["上大静脈", "上行大動脈", "顔面動脈", "左心室"], "answer": 1 },
+{ "id": 26, "question": "肺活量を表す計算式はどれか。", "options": ["1回換気量+予備吸気量+予備呼気量", "1回換気量+予備呼気量+残気量", "1回換気量+予備吸気量", "1回換気量+残気量"], "answer": 1 },
+{ "id": 27, "question": "糖質について正しいのはどれか。", "options": ["セルロースは単糖類である。", "血液中のガラクトースの濃度を血糖値という。", "ショ糖は炭素と窒素から構成される。", "グリコーゲンは肝臓で貯蔵される。"], "answer": 4 },
+{ "id": 28, "question": "健康成人の尿について正しいのはどれか。", "options": ["1日の尿量は約300mLである。", "pHは7.4±0.05の範囲に保たれる。", "血漿と同濃度のグルコースを含む。", "血漿より高濃度の尿素を含む。"], "answer": 4 },
+{ "id": 29, "question": "バソプレシンについて正しいのはどれか。", "options": ["ステロイドホルモンである。", "下垂体前葉から分泌される。", "腎臓の集合管における水の再吸収を促す。", "血漿浸透圧が低下すると分泌が増加する。"], "answer": 3 },
+{ "id": 30, "question": "性周期において卵胞期に起こるのはどれか。", "options": ["受精卵の着床", "子宮内膜の肥厚", "基礎体温の上昇", "プロゲステロン分泌の増加"], "answer": 2 },
+{ "id": 31, "question": "成人のレム睡眠について正しいのはどれか。", "options": ["眼球が急速に動く。", "脳波に棘波が出現する。", "睡眠全体の約60%を占める。", "全身の骨格筋の緊張が亢進する。"], "answer": 1 },
+{ "id": 32, "question": "運動ニューロンについて正しいのはどれか。", "options": ["細胞体は大脳皮質運動野に位置する。", "錘内筋線維を支配する。", "運動単位を構成する。", "筋紡錘の感度を調節する。"], "answer": 3 },
+{ "id": 33, "question": "全身性疾患はどれか。", "options": ["白内障", "橋本病", "グッドパスチャー症候群", "アミロイドーシス"], "answer": 4 },
+{ "id": 34, "question": "梗塞の際に融解壊死が最も生じやすい臓器はどれか。", "options": ["脳", "心臓", "肝臓", "腎臓"], "answer": 1 },
+{ "id": 35, "question": "浮腫(水腫)の原因疾患と発生機序の組合せで正しいのはどれか。", "options": ["うっ血性心不全：血管透過性の亢進", "じんま疹：血漿膠質浸透圧の低下", "ネフローゼ症候群：毛細血管内圧の上昇", "腫瘍：リンパの還流障害"], "answer": 4 },
+{ "id": 36, "question": "下肢の深部静脈血栓が剥離して血流で運ばれた場合、塞栓症を最も生じやすい臓器はどれか。", "options": ["脳", "肺", "腎臓", "脾臓"], "answer": 2 },
+{ "id": 37, "question": "ラングハンス巨細胞の由来はどれか。", "options": ["好中球", "樹状細胞", "リンパ球", "マクロファージ"], "answer": 4 },
+{ "id": 38, "question": "大腸癌のTNM分類を行う上で必要な情報はどれか。", "options": ["組織型", "遠隔転移の有無", "静脈侵襲の有無", "腫瘍の存在する大腸の部位"], "answer": 2 },
+{ "id": 39, "question": "月経異常について正しいのはどれか。", "options": ["授乳は原発性無月経の原因となる。", "運動過多は過多月経の原因となる。", "続発性無月経では鉄欠乏性貧計が起こる。", "月経前症候群(PMS)の症状は月経が始まると消失する。"], "answer": 4 },
+{ "id": 40, "question": "規則的な不随意運動はどれか。", "options": ["振戦", "ジストニア", "アテトーゼ", "バリズム"], "answer": 1 },
+{ "id": 41, "question": "呼吸器疾患と症状の組合せで最も適切なのはどれか。", "options": ["間質性肺炎：乾性咳嗽", "細菌性肺炎：白色痰", "気管支喘息：昼間の咳", "COPD：発作性呼吸困難"], "answer": 1 },
+{ "id": 42, "question": "消化管出血について正しいのはどれか。", "options": ["上部消化管出血では下血を認めない。", "胃からの出血ではコーヒー残渣様吐血をみる。", "吐血を伴う腹痛には非ステロイド性鎮痛解熱薬を投与する。", "免疫学的便潜血検査は獣肉の生食で陽性となる。"], "answer": 2 },
+{ "id": 43, "question": "尿所見と病態の組合せで正しいのはどれか。", "options": ["多尿：前立腺肥大", "低比重：脱水", "糖陽性：甲状腺機能低下", "ケトン体陽性：飢餓"], "answer": 4 },
+{ "id": 44, "question": "血小板が増加するのはどれか。", "options": ["出血", "紫斑病", "急性白血病", "再生不良性貧血"], "answer": 1 },
+{ "id": 45, "question": "登はん性起立がみられるのはどれか。", "options": ["デュシェンヌ型筋ジストロフィー", "重症筋無力症", "中心性脊髄損傷", "脳性麻痺"], "answer": 1 },
+{ "id": 46, "question": "原因療法として正しいのはどれか。", "options": ["脚気に対するビタミンB1投与", "百日咳に対する鎮咳薬投与", "市中肺炎に対する解熱薬投与", "橈骨遠位端骨折に対する鎮痛薬投与"], "answer": 1 },
+{ "id": 47, "question": "疾患と粘膜皮膚病変の組合せで正しいのはどれか。", "options": ["全身性エリテマトーデス：ヘリオトロープ疹", "肝硬変：蝶形紅斑", "麻疹：コプリック斑", "皮膚筋炎：バラ疹"], "answer": 3 },
+{ "id": 48, "question": "心音の増強がみられるのはどれか。", "options": ["僧帽弁狭窄症", "COPD", "心囊液貯留", "肥満"], "answer": 1 },
+{ "id": 49, "question": "帯状疱疹について正しいのはどれか。", "options": ["5類感染症である。", "ウイルスの初回感染で起こる。", "ワクチンによって予防が可能である。", "左右対称性に出現する。"], "answer": 3 },
+{ "id": 50, "question": "パニック障害について正しいのはどれか。", "options": ["発作は場所や時間に関係なく突然起こる。", "発作時の呼吸困難には酸素投与を行う。", "発作の胸痛は数時間続く。", "薬物療法は無効である。"], "answer": 1 },
+{ "id": 51, "question": "脳性麻痺について正しいのはどれか。", "options": ["脳の進行性病変に基づく障害である。", "病型は失調型が最も多い。", "精神発達遅滞と麻痺の程度は無関係である。", "ボツリヌス毒素治療の適応とはならない。"], "answer": 3 },
+{ "id": 52, "question": "小児の気管支喘息について正しいのはどれか。", "options": ["非アトピー型喘息が多い。", "発作時には呼気の延長がみられる。", "発作時には水分摂取を制限する。", "思春期までに寛解するのはまれである。"], "answer": 2 },
+{ "id": 53, "question": "膵癌の危険因子はどれか。", "options": ["胃癌", "糖尿病", "腎不全", "関節リウマチ"], "answer": 2 },
+{ "id": 54, "question": "アルコール性肝障害について誤っているのはどれか。", "options": ["治療の基本は禁酒である。", "肝生検は診断に有用である。", "飲酒量が同量の場合、男性の方が発症しやすい。", "y-GTが高値である。"], "answer": 3 },
+{ "id": 55, "question": "乳癌について正しいのはどれか。", "options": ["男性には発症しない。", "主な症状は乳房のしこりである。", "頸部リンパ節に転移しやすい。", "エストロゲン補充療法を行う。"], "answer": 2 },
+{ "id": 56, "question": "心房細動について最も適切なのはどれか。", "options": ["脳梗塞の原因となる。", "原因に甲状腺機能低下症がある。", "好発年齢は40歳代である。", "薬物療法は無効である。"], "answer": 1 },
+{ "id": 57, "question": "冠攣縮性狭心症について正しいのはどれか。", "options": ["夜間から早朝にかけての発症が多い。", "血栓により冠動脈が狭窄して起こる。", "運動負荷心電図でST低下がみられる。", "ニトログリセリンの効果が乏しい。"], "answer": 1 },
+{ "id": 58, "question": "二次性ネフローゼ症候群の原因となる疾患で最も適切なのはどれか。", "options": ["膜性腎症", "糖尿病性腎症", "巣状分節性糸球体硬化症", "膜性増殖性糸球体腎炎"], "answer": 2 },
+{ "id": 59, "question": "高血圧症について最も適切なのはどれか。", "options": ["常習的飲酒は血圧低下を生じる。", "運動は危険因子である。", "収縮期血圧の治療目標は140mmHg以下である。", "安静時血圧に基づいて薬物治療を行う。"], "answer": 4 },
+{ "id": 60, "question": "糖尿病による細小血管障害はどれか。", "options": ["脳梗塞", "心筋梗塞", "慢性腎臓病", "下肢閉塞性動脈疾患"], "answer": 3 },
+{ "id": 61, "question": "手根管症候群の原因とならないのはどれか。", "options": ["肥満", "妊娠", "貧血", "人工透析"], "answer": 3 },
+{ "id": 62, "question": "褐色細胞腫で減少・低下するのはどれか。", "options": ["血圧", "体重", "発汗", "脈拍"], "answer": 2 },
+{ "id": 63, "question": "スポーツ外傷・障害と罹患部位の組合せで正しいのはどれか。", "options": ["オスグッド病：大腿骨外側顆", "ジャンパー膝：脛骨遠位端", "マレット指：中節骨近位端", "野球肘(外側型)：上腕骨小頭"], "answer": 4 },
+{ "id": 64, "question": "真菌性肺炎はどれか。", "options": ["レジオネラ肺炎", "マイコプラズマ肺炎", "クラミジア肺炎", "ニューモシスチス肺炎"], "answer": 4 },
+{ "id": 65, "question": "前立腺肥大症について最も適切なのはどれか。", "options": ["PSA 値が極めて高値となる。", "直腸指診で石のように硬い前立腺を触知する。", "夜間頻尿がみられる。", "ホルモン補充療法が有効である。"], "answer": 3 },
+{ "id": 66, "question": "変形性股関節症の一般的な治療法として適切でないのはどれか。", "options": ["ギプス固定", "人工股関節全置換術", "生活指導", "薬物治療"], "answer": 1 },
+{ "id": 67, "question": "血友病について正しいのはどれか。", "options": ["男児よりも女児に多い。", "X連鎖性潜性遺伝する。", "血液凝固第VI因子の欠乏に起因する。", "皮膚表面の紫斑が主症状である。"], "answer": 2 },
+{ "id": 68, "question": "痛風について正しいのはどれか。", "options": ["胆石を合併しやすい。", "手関節の腫脹が特徴的所見である。", "非飲酒者でも発症する。", "尿酸結晶が末梢神経に沈着して痛みを生じる。"], "answer": 3 },
+{ "id": 69, "question": "一過性脳虚血発作について正しいのはどれか。", "options": ["脳卒中の一つである。", "発作は24時間以内に消失する。", "MRI検査で急性梗塞巣を認める。", "薬物療法は不要である。"], "answer": 2 },
+{ "id": 70, "question": "レビー小体型認知症に最も特徴的なのはどれか。", "options": ["近所の散歩中に迷子になる。", "現実味のある幻視がみえる。", "物を盗られたという妄想がある。", "自動販売機での切符購入が困難になる。"], "answer": 2 },
+{ "id": 71, "question": "痙縮について正しいのはどれか。", "options": ["パーキンソン病に特有の症状である。", "歯車現象を生じる。", "上位運動ニューロン障害によって生じる。", "関節可動域の拡大が特徴である。"], "answer": 3 },
+{ "id": 72, "question": "二分脊椎について正しいのはどれか。", "options": ["先天的に発症する脊髄疾患である。", "水頭症を合併することはない。", "病変が高位になるほど障害は軽度となる。", "皮膚病変を合併することはない。"], "answer": 1 },
+{ "id": 73, "question": "改訂日本版フレイル基準に含まれる項目はどれか。", "options": ["骨量減少", "視力低下", "体重減少", "認知機能低下"], "answer": 3 },
+{ "id": 74, "question": "職種と主な業務内容の組合せで正しいのはどれか。", "options": ["管理栄養士：嚥下訓練", "義肢装具士：装具処方", "作業療法士：自助具作製", "ケアマネジャー：入浴介助"], "answer": 3 },
+{ "id": 75, "question": "異常歩行と原因疾患の組合せで正しいのはどれか。", "options": ["はさみ脚歩行：進行性筋ジストロフィー", "分回し歩行：脊髄小脳変性症", "突進歩行：パーキンソン病", "トレンデレンブルグ歩行：脳性麻痺"], "answer": 3 },
+{ "id": 76, "question": "下肢切断後の幻肢痛で正しいのはどれか。", "options": ["小児では出現しにくい。", "断端創の治癒により消失する。", "鎮痛薬の効果が得られやすい。", "疼痛が軽減してから義足を使用する。"], "answer": 1 },
+{ "id": 77, "question": "関節リウマチにみられる最も特徴的な症状はどれか。", "options": ["内反尖足", "非対称性の関節腫脹", "0脚", "環軸関節亜脱臼"], "answer": 4 },
+{ "id": 78, "question": "身体障害者福祉法に定められた身体障害でないのはどれか。", "options": ["肢体不自由", "視覚障害", "発達障害", "音声機能の障害"], "answer": 3 },
+{ "id": 79, "question": "作業療法で主に用いる補装具はどれか。", "options": ["義手", "義足", "体幹装具", "下肢装具"], "answer": 1 },
+{ "id": 80, "question": "高齢者の外傷性脊髄損傷の受傷原因として最も多いのはどれか。", "options": ["スポーツ", "交通事故", "労働災害", "転倒・転落"], "answer": 4 },
+{ "id": 81, "question": "閉塞性換気障害を呈する疾患はどれか。", "options": ["高度肥満症", "気管支喘息", "間質性肺炎", "重症筋無力症"], "answer": 2 },
+{ "id": 82, "question": "ICFの生活機能に含まれないのはどれか。", "options": ["疾病", "心身機能・身体構造", "活動", "参加"], "answer": 1 },
+{ "id": 83, "question": "（症例）17歳の女子バレーボール選手。スパイクの練習量が多くなり、左下腿中央部の痛みを自覚。左脛骨中央に著明な圧痛とエックス線側面像で骨皮質の肥厚を認めた。体温は正常、安静時および夜間の痛みはない。疾患として最も考えられるのはどれか。", "options": ["類骨骨腫", "疲労骨折", "化膿性骨髄炎", "シンスプリント"], "answer": 2 },
+{ "id": 84, "question": "（前問の症例）最も適切な対応はどれか。", "options": ["抗菌薬の投与", "骨腫瘍部の切除", "下腿筋群のストレッチング", "スパイク動作の中止"], "answer": 4 },
+{ "id": 85, "question": "（症例）66歳の男性。右前頭葉に脳出血を発症し保存治療中。身体麻痺は認められず排泄動作は自立しているが、トイレに行くこと自体を忘れて失禁することがある。高次脳機能障害として最も考えられるのはどれか。", "options": ["半側空間無視", "遂行機能障害", "身体失認", "観念失行"], "answer": 2 },
+{ "id": 86, "question": "（前問の症例）家族が患者に行う対応として最も適切なのはどれか。", "options": ["本人の自主性を尊重して見守る。", "繰り返し口頭で指示する。", "手順を見える形で示して一緒に確認する。", "刺激を与えるため毎日予定を変える。"], "answer": 3 },
+{ "id": 87, "question": "（症例）58歳の女性。6日前から右肩のこり感があった。昨日から右肩甲骨内側の痛みと右前腕橈側から母指・示指のしびれが出現した。右上肢の挙上障害はなく、衣服のボタンかけにも異常はない。下肢に症状はない。神経学的所見で正しいのはどれか。", "options": ["ワルテンベルグ反射陽性", "指鼻試験陽性", "バレー徴候陽性", "腕橈骨筋腱反射減弱"], "answer": 4 },
+{ "id": 88, "question": "（前問の症例）本患者の筋力評価で最も適切なのはどれか。", "options": ["右三角筋 MMT2", "右上腕二頭筋 MMT2", "右手関節背屈力低下", "右小指外転筋力低下"], "answer": 3 },
+{ "id": 89, "question": "（症例）38歳の女性。身長160cm、体重55kg、胸囲88cm。6か月前の検診でも異常を指摘されなかったが、入浴時、左乳房に雀卵大のしこりがあることに気づいた。最初に行うべき検査で最も適切なのはどれか。", "options": ["マンモグラフィ", "超音波検査", "性ホルモン量測定", "腫瘍マーカー測定"], "answer": 2 },
+{ "id": 90, "question": "（前問の症例）診断確定のために行う検査はどれか。", "options": ["病理組織検査", "CT検査", "PET検査", "MRI検査"], "answer": 1 }
 ];
-let idx = 0, res = [];
+
+let current = 0; let results = [];
 function show() {
-    const q = questions[idx];
-    document.getElementById('q-info').innerText = `問題 ${idx + 1} / ${questions.length}`;
-    document.getElementById('q-text').innerText = q.q;
-    const div = document.getElementById('opts'); div.innerHTML = '';
-    q.o.forEach((o, i) => {
-        const b = document.createElement('button'); b.className = 'opt-btn';
-        b.innerText = o; b.onclick = () => next(i + 1);
-        div.appendChild(b);
-    });
+const q = questions[current];
+if(!q) return;
+document.getElementById('q-info').innerText = `問題 ${current + 1} / ${questions.length}`;
+document.getElementById('q-text').innerText = q.question;
+const container = document.getElementById('opts');
+container.innerHTML = '';
+q.options.forEach((opt, i) => {
+const btn = document.createElement('button');
+btn.className = 'opt-btn';
+btn.innerText = `${i + 1}. ${opt}`;
+btn.onclick = () => { results.push(i + 1); current++; current < questions.length ? show() : finish(); };
+container.appendChild(btn);
+});
 }
-function next(sel) {
-    const q = questions[idx];
-    res.push({ q: q.q, opts: q.o, correct: q.a, ok: sel === q.a });
-    idx++;
-    if (idx < questions.length) { show(); } else { result(); }
-}
-function result() {
-    document.getElementById('quiz-ui').style.display = 'none';
-    document.getElementById('res-ui').style.display = 'block';
-    const score = res.filter(r => r.ok).length;
-    document.getElementById('score-text').innerText = `得点: ${score} / ${questions.length}`;
-    const list = document.getElementById('wrong-answers-list'); list.innerHTML = '';
-    res.filter(r => !r.ok).forEach(r => {
-        const item = document.createElement('div');
-        item.innerHTML = `<p><b>${r.q}</b><br><span class="review-ans">✅ 正解：${r.opts[r.correct-1]}</span></p>`;
-        list.appendChild(item);
-    });
-    new Chart(document.getElementById('chart'), {
-        type: 'doughnut',
-        data: { labels: ['正解', '不正解'], datasets: [{ data: [score, questions.length - score], backgroundColor: ['#28a745', '#dc3545'] }] },
-        options: { responsive: true, maintainAspectRatio: false }
-    });
+function finish() {
+document.getElementById('quiz-ui').style.display='none';
+document.getElementById('res-ui').style.display='block';
+let correct = 0;
+const list = document.getElementById('review-list');
+questions.forEach((q, i) => {
+const isOk = results[i] === q.answer;
+if(isOk) correct++;
+const card = document.createElement('div');
+card.className = `card ${isOk ? 'ok' : 'ng'}`;
+card.innerHTML = `<strong>問${i+1}: ${isOk ? '○' : '×'}</strong><br>${q.question}<br><small>正答: ${q.options[q.answer-1]}</small>`;
+list.appendChild(card);
+});
+const percent = Math.round((correct/questions.length)*100);
+document.getElementById('score-text').innerText = `${percent}% (${correct}/${questions.length})`;
+new Chart(document.getElementById('chart'), { type: 'doughnut', data: { datasets: [{ data: [correct, questions.length-correct], backgroundColor: ['#005BAC', '#ddd'], borderWidth:0 }] }, options: { cutout:'75%' } });
 }
 show();
 </script>
