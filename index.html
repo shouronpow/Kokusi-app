@@ -3,75 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>第34回 鍼灸国試 午前90問 AIアドバイス版</title>
+    <title>鍼灸国試アプリ</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        :root { --blue: #005BAC; --light: #E6F0F8; }
-        body { font-family: sans-serif; background: #f5f7f9; margin: 0; padding: 20px; display: flex; justify-content: center; }
-        #app { background: white; width: 100%; max-width: 800px; border-radius: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); padding: 30px; }
-        .q-text { font-weight: bold; font-size: 1.6rem; margin: 25px 0; line-height: 1.6; }
-        .opt-btn { display: block; width: 100%; padding: 22px; margin-bottom: 12px; border: 2px solid var(--light); border-radius: 15px; background: white; text-align: left; font-size: 1.3rem; cursor: pointer; }
-        .opt-btn:active { background: var(--light); }
-        #advice-box { background: #eef; padding: 20px; border-radius: 15px; margin: 20px 0; color: #005BAC; font-weight: bold; font-size: 1.2rem; line-height: 1.5; border-left: 8px solid #005BAC; text-align: left; }
+        body { font-family: sans-serif; background: #f5f7f9; padding: 20px; text-align: center; }
+        #app { background: white; border-radius: 20px; padding: 20px; max-width: 500px; margin: auto; }
+        .opt-btn { display: block; width: 100%; padding: 15px; margin: 10px 0; border: 2px solid #E6F0F8; border-radius: 10px; background: white; }
     </style>
 </head>
 <body>
 <div id="app">
-    <div id="quiz-ui">
-        <h1 style="color:var(--blue); text-align:center;">第34回 午前 90問</h1>
-        <div id="q-info" style="color:#888; font-size:1.1rem;"></div>
-        <div id="q-text" class="q-text"></div>
-        <div id="opts"></div>
-    </div>
-    <div id="res-ui" style="display:none; text-align:center;">
-        <h1 style="color:var(--blue);">演習結果</h1>
-        <div id="advice-box"></div>
-        <div style="width:250px; margin:auto;"><canvas id="chart"></canvas></div>
-        <h2 id="score-text" style="font-size: 2rem;"></h2>
-        <button onclick="location.reload()" style="margin-top:20px; padding:18px 40px; background:var(--blue); color:white; border:none; border-radius:35px; font-size:1.3rem; font-weight:bold; cursor:pointer;">最初から解く</button>
-    </div>
+    <div id="q-text" style="font-weight:bold; font-size:1.2rem; margin-bottom:20px;"></div>
+    <div id="opts"></div>
 </div>
 <script>
-// ここに問題データを入れます（例として2問だけ載せますが、本来は90問分入ります）
 const questions = [
-    {"id": 1, "question": "我が国の2023年度の指定難病において、受給者証所持者数が最も多いのはどれか。", "options": ["パーキンソン病", "潰瘍性大腸炎", "全身性エリテマトーデス", "クローン病"], "answer": 1},
-    {"id": 2, "question": "あはき施術者の倫理について正しいのはどれか。", "options": ["施術者本位の施術", "施術者の利益優先", "患者家族の要望優先", "患者の苦痛への共感"], "answer": 4}
+    {"q":"問1:指定難病で受給者数が最も多いのは？","o":["1.パーキンソン病","2.潰瘍性大腸炎","3.全身性エリテマトーデス","4.クローン病"],"a":1},
+    {"q":"問2:あはき施術者の倫理で正しいのは？","o":["1.施術者本位","2.利益優先","3.家族の要求優先","4.患者の苦痛への共感"],"a":4},
+    {"q":"問3:名称独占と業務独占の両方があるのは？","o":["1.理学療法士","2.作業療法士","3.保健師","4.看護師"],"a":4},
+    {"q":"問4:介護保険制度で正しいのは？","o":["1.保険者は県","2.75歳以上","3.認定区分は5つ","4.改定は毎年"],"a":3},
+    {"q":"問5:自然に健康になれる環境づくりは何次予防？","o":["1.0次予防","2.1次予防","3.2次予防","4.3次予防"],"a":1}
 ];
-let currentIdx = 0; let results = [];
-function showQuestion() {
-    const q = questions[currentIdx];
-    document.getElementById('q-info').innerText = `問題 ${currentIdx + 1} / ${questions.length}`;
-    document.getElementById('q-text').innerText = q.question;
-    const optsDiv = document.getElementById('opts'); optsDiv.innerHTML = '';
-    q.options.forEach((opt, i) => {
-        const btn = document.createElement('button'); btn.className = 'opt-btn';
-        btn.innerText = `${i + 1}. ${opt}`; btn.onclick = () => next(i + 1);
-        optsDiv.appendChild(btn);
+let i = 0;
+function show() {
+    const q = questions[i];
+    document.getElementById('q-text').innerText = q.q;
+    const div = document.getElementById('opts'); div.innerHTML = '';
+    q.o.forEach((o, idx) => {
+        const b = document.createElement('button'); b.className = 'opt-btn';
+        b.innerText = o; b.onclick = () => { i++; if(i < questions.length){ show(); }else{ alert('終了！'); } };
+        div.appendChild(b);
     });
 }
-function next(sel) {
-    results.push({ q: questions[currentIdx], sel, isCorrect: sel === questions[currentIdx].answer });
-    currentIdx++;
-    if (currentIdx < questions.length) { showQuestion(); } else { showResult(); }
-}
-function showResult() {
-    document.getElementById('quiz-ui').style.display = 'none';
-    document.getElementById('res-ui').style.display = 'block';
-    const score = results.filter(r => r.isCorrect).length;
-    const accuracy = (score / questions.length) * 100;
-    document.getElementById('score-text').innerText = `得点: ${score} / ${questions.length}`;
-    let msg = "";
-    if(accuracy === 100) msg = "完璧です！このまま本番に挑みましょう。";
-    else if(accuracy >= 80) msg = "合格ライン突破！間違えたところを復習すれば完璧です。";
-    else if(accuracy >= 60) msg = "あと一押し！苦手な分野を集中して見直しましょう。";
-    else msg = "基礎固めから始めましょう。教科書を読み直すのが近道です！";
-    document.getElementById('advice-box').innerHTML = `💡 AIアドバイス：<br>${msg}`;
-    new Chart(document.getElementById('chart'), {
-        type: 'doughnut',
-        data: { labels: ['正解', '不正解'], datasets: [{ data: [score, questions.length - score], backgroundColor: ['#28a745', '#dc3545'] }] }
-    });
-}
-showQuestion();
+show();
 </script>
 </body>
 </html>
