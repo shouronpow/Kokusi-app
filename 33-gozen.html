@@ -15,8 +15,11 @@ body { font-family: sans-serif; background: #f5f7f9; margin: 0; padding: 15px; d
 .card { padding: 15px; margin-bottom: 10px; border-radius: 10px; border-left: 8px solid; text-align: left; font-size: 0.9rem; }
 .ok { background: #d4edda; border-color: #28a745; color: #155724; }
 .ng { background: #f8d7da; border-color: #dc3545; color: #721c24; }
+.not-answered { background: #e9ecef; border-color: #6c757d; color: #495057; opacity: 0.7; }
 .advice { background:#eef; padding:20px; border-radius:15px; margin:20px 0; border-left:8px solid #005BAC; font-weight:bold; color:#005BAC; text-align:left; }
 #review-list { max-height:400px; overflow-y:auto; margin-top:20px; border-top: 1px solid #eee; padding-top: 10px; }
+.stop-btn { margin-top: 20px; padding: 10px 20px; background: none; border: 1px solid #ccc; color: #999; border-radius: 8px; cursor: pointer; font-size: 0.8rem; display: block; margin-left: auto; margin-right: auto; }
+.stop-btn:hover { background: #eee; color: #666; }
 </style>
 </head>
 <body>
@@ -26,11 +29,13 @@ body { font-family: sans-serif; background: #f5f7f9; margin: 0; padding: 15px; d
         <div id="q-info" style="color:#888; text-align:center; margin-bottom:10px;"></div>
         <div id="q-text" class="q-text"></div>
         <div id="opts"></div>
+        <button class="stop-btn" onclick="finish()">途中で終了して採点する</button>
     </div>
     <div id="res-ui" style="display:none; text-align:center;">
         <h1 style="color:var(--blue);">演習結果</h1>
         <div style="width:200px; height:200px; margin:auto;"><canvas id="chart"></canvas></div>
         <h2 id="score-text" style="font-size: 2rem; margin: 15px 0;"></h2>
+        <p id="progress-text" style="color:#666;"></p>
         <div id="ai-advice" class="advice"></div>
         <div id="review-list"></div>
         <button onclick="location.reload()" style="margin-top:25px; padding:18px 45px; background:var(--blue); color:white; border:none; border-radius:35px; font-size:1.3rem; font-weight:bold; cursor:pointer;">最初から解く</button>
@@ -83,8 +88,7 @@ const questions = [
     { "q": "問題 42 脈拍について正しいのはどれか。", "o": ["1. 貧血では徐脈になる。", "2. 脳圧亢進では徐脈になる。", "3. パーキンソン病では頻脈になる。", "4. 甲状腺機能低下症では頻脈になる。"], "a": 2 },
     { "q": "問題 43 易感染性をきたす疾患として最も適切なのはどれか。", "o": ["1. 鉄欠乏性貧血", "2. 特発性血小板減少性紫斑病", "3. 急性骨髄性白血病", "4. 巨赤芽球性貧血"], "a": 3 },
     { "q": "問題 44 便秘の原因で最も適切なのはどれか。", "o": ["1. オピオイド内服", "2. 胃切除", "3. ノロウイルス感染", "4. 乳糖不耐症"], "a": 1 },
-    { "q": "問題 45 チアノーゼの原因とならないのはどれか。", "o": ["1. 貧血", "2. 左心不全", "3. ファロー四徴症", "4. COPD"], "a": 1 }
-];
+    { "q": "問題 45 チアノーゼの原因とならないのはどれか。", "o": ["1. 貧血", "2. 左心不全", "3. ファロー四徴症", "4. COPD"], "a": 1 },
     { "q": "問題 46 声音振盪が増強するのはどれか。", "o": ["1. 気胸", "2. 肺炎", "3. 肺気腫", "4. 胸水貯留"], "a": 2 },
     { "q": "問題 47 脳神経で、障害されると僧帽筋の筋力低下を示すのはどれか。", "o": ["1. 三叉神経", "2. 顔面神経", "3. 迷走神経", "4. 副神経"], "a": 4 },
     { "q": "問題 48 ターミナルケアについて最も適切なのはどれか。", "o": ["1. 原疾患の根治を目標とする。", "2. 苦痛緩和を最大限検討する。", "3. 生活の質より延命を優先する。", "4. 治療方針の決定は医師と患者の家族で行う。"], "a": 2 },
@@ -114,7 +118,7 @@ const questions = [
     { "q": "問題 72 脊髄損傷患者に生じる自律神経過反射について正しいのはどれか。", "o": ["1. 血圧上昇にはまず降圧薬を投与する。", "2. 腰髄損傷患者にみられる。", "3. 脳内出血を合併することはない。", "4. 難治性便秘が誘因となる。"], "a": 4 },
     { "q": "問題 73 心臓リハビリテーションの適応となるのはどれか。", "o": ["1. 不安定狭心症", "2. 急性心筋炎", "3. 急性大動脈解離", "4. 心不全"], "a": 4 },
     { "q": "問題 74 摂食嚥下機能について正しいのはどれか。", "o": ["1. 先行期では食物を認識する。", "2. 口腔期では食物を咀嚼し食塊を形成する。", "3. 咽頭期では食塊が咽頭へ送り込まれる。", "4. 食道期では食塊が食道へ送り込まれる。"], "a": 1 },
-    { "q": "問題 75 大腿骨頸部骨折に対する人工骨頭置換術後のリハビリテーションで、最も適切なのはどれか。", "o": ["1. 術直後から患側下肢の抵抗運動を開始する。", "2. 術後疼痛緩和のために極超短波療法を行う。", "3. 患側股関節の回旋運動を行う。", "4. 術後早期から荷重訓練を開始する。"], "a": 4 },
+    { "q": "問題 75 大腿骨頸部骨折に対する人工骨頭置換術後のリハビリテーションで、最も適切なのはどれか。", "o": ["1. 術直後から患側下肢の抵抗運動を開始する。", "2. 術後疼痛緩和のために極超短波療法を行う。", "3. 患側股関節の回旋運動を行う。", "4. 術早早期から荷重訓練を開始する。"], "a": 4 },
     { "q": "問題 76 改訂日本版フレイル基準に含まれる項目はどれか。", "o": ["1. 骨密度低下", "2. 聴力低下", "3. 認知機能低下", "4. 筋力低下"], "a": 4 },
     { "q": "問題 77 脳性麻痺の病型で最も多いのはどれか。", "o": ["1. アテトーゼ型", "2. 痙直型", "3. 失調型", "4. 混合型"], "a": 2 },
     { "q": "問題 78 パーキンソン病におけるホーン・ヤールの重症度分類において、「姿勢反射障害を認めるが日常生活に介助は不要な状態」はどれか。", "o": ["1. ステージⅠ", "2. ステージⅡ", "3. ステージⅢ", "4. ステージⅣ"], "a": 3 },
@@ -131,6 +135,7 @@ const questions = [
     { "q": "問題 89 本疾患の発症について正しいのはどれか。(55歳男性・心窩部痛症例)", "o": ["1. イカの生食では発症しない。", "2. 一度発症したら二度と罹患しない。", "3. 食材の－20℃、24時間以上の冷凍で予防できる。", "4. 細菌感染症である。"], "a": 3 },
     { "q": "問題 90 本疾患について正しいのはどれか。(55歳男性・心窩部痛症例)", "o": ["1. 胃内視鏡下で摘出を行う。", "2. アナフィラキシーは発症しない。", "3. 胃潰瘍を認める。", "4. 抗菌薬投与が有効である。"], "a": 1 }
 ];
+
 let cur = 0, results = [];
 function show() {
     const q = questions[cur];
@@ -146,20 +151,31 @@ function show() {
 function finish() {
     document.getElementById('quiz-ui').style.display='none';
     document.getElementById('res-ui').style.display='block';
-    let ok = 0; const list = document.getElementById('review-list');
+    let ok = 0; const answered = results.length;
+    const list = document.getElementById('review-list');
+    list.innerHTML = '';
     questions.forEach((q, i) => {
-        const isOk = results[i] === q.a; if(isOk) ok++;
-        const card = document.createElement('div'); card.className = `card ${isOk ? 'ok' : 'ng'}`;
-        card.innerHTML = `<strong>問${i+1}: ${isOk ? '○' : '×'}</strong><br>${q.q}<br><small>正答: ${q.o[q.a-1]}</small>`;
+        const card = document.createElement('div');
+        if (i < answered) {
+            const isOk = results[i] === q.a; if(isOk) ok++;
+            card.className = `card ${isOk ? 'ok' : 'ng'}`;
+            card.innerHTML = `<strong>問${i+1}: ${isOk ? '○' : '×'}</strong><br>${q.q}<br><small>正答: ${q.o[q.a-1]}</small>`;
+        } else {
+            card.className = `card not-answered`;
+            card.innerHTML = `<strong>問${i+1}: 未回答</strong><br>${q.q}<br><small>正答: ${q.o[q.a-1]}</small>`;
+        }
         list.appendChild(card);
     });
-    const p = Math.round((ok/questions.length)*100);
-    document.getElementById('score-text').innerText = `${p}% (${ok}/${questions.length})`;
+    const p = answered > 0 ? Math.round((ok/answered)*100) : 0;
+    document.getElementById('score-text').innerText = `正解率: ${p}%`;
+    document.getElementById('progress-text').innerText = `回答: ${answered} / 全${questions.length}問 (正解: ${ok})`;
+    
     const adv = document.getElementById('ai-advice');
     if(p >= 80) adv.innerText = "素晴らしい！合格ラインを大幅に超えています。この調子で維持しましょう！";
     else if(p >= 60) adv.innerText = "合格圏内です！間違えた問題を復習して、さらに確実なものにしましょう。";
     else adv.innerText = "基礎知識を再確認しましょう。特に間違えた科目を重点的に復習です！";
-    new Chart(document.getElementById('chart'), { type: 'doughnut', data: { datasets: [{ data: [ok, questions.length-ok], backgroundColor: ['#005BAC', '#ddd'], borderWidth:0 }] } });
+    
+    new Chart(document.getElementById('chart'), { type: 'doughnut', data: { datasets: [{ data: [ok, answered-ok, questions.length-answered], backgroundColor: ['#005BAC', '#dc3545', '#eee'], borderWidth:0 }] } });
 }
 show();
 </script>
