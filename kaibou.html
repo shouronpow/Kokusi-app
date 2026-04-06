@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>解剖学 攻略</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+:root { --red: #C62828; --light: #FFEBEE; }
+body { font-family: sans-serif; background: #fdf2f2; margin: 0; padding: 15px; display: flex; justify-content: center; }
+#app { background: white; width: 100%; max-width: 800px; border-radius: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); padding: 25px; text-align: center; }
+.q-text { font-weight: bold; font-size: 1.2rem; margin: 20px 0; line-height: 1.6; text-align: left; white-space: pre-wrap; }
+.opt-btn { display: block; width: 100%; padding: 16px; margin-bottom: 12px; border: 2px solid #eee; border-radius: 12px; background: white; text-align: left; font-size: 1.1rem; cursor: pointer; transition: 0.2s; }
+.opt-btn:hover { background: var(--light); border-color: var(--red); }
+.card { padding: 15px; margin-bottom: 10px; border-radius: 10px; border-left: 8px solid; text-align: left; font-size: 0.9rem; }
+.ok { background: #d4edda; border-color: #28a745; color: #155724; }
+.ng { background: #f8d7da; border-color: #dc3545; color: #721c24; }
+#review-list { max-height: 400px; overflow-y: auto; margin-top: 20px; border-top: 1px solid #eee; padding-top: 15px; }
+</style>
+</head>
+<body>
+<div id="app">
+    <div id="quiz-ui">
+        <h1 style="color:var(--red);">解剖学 (33-34回)</h1>
+        <div id="q-info" style="color:#888; margin-bottom:10px;"></div>
+        <div id="q-text" class="q-text"></div>
+        <div id="opts"></div>
+    </div>
+    <div id="res-ui" style="display:none;">
+        <h1 style="color:var(--red);">演習結果</h1>
+        <div style="width:200px; height:200px; margin:auto;"><canvas id="chart"></canvas></div>
+        <h2 id="score-text" style="font-size: 2.5rem; margin: 15px 0;"></h2>
+        <div id="review-list"></div>
+        <button onclick="location.reload()" style="margin-top:25px; padding:18px 45px; background:var(--red); color:white; border:none; border-radius:35px; font-weight:bold; cursor:pointer;">もう一度解く</button>
+        <button onclick="location.href='index.html'" style="display:block; margin: 15px auto; border:none; background:none; color:#666; cursor:pointer;">メニューへ戻る</button>
+    </div>
+</div>
+<script>
+const questions = [
+{ "q": "問15 胸管が流入する部位はどこか。(33回)", "o": ["1. 右静脈角", "2. 左静脈角", "3. 上大静脈", "4. 下大静脈"], "a": 2 },
+{ "q": "問16 門脈に注がない静脈はどれか。(33回)", "o": ["1. 脾静脈", "2. 上腸間膜静脈", "3. 下腸間膜静脈", "4. 肝静脈"], "a": 4 },
+{ "q": "問17 喉頭の高さにある軟骨はどれか。(33回)", "o": ["1. 甲状軟骨", "2. 気管軟骨", "3. 鼻軟骨", "4. 肋軟骨"], "a": 1 },
+{ "q": "問18 尿細管が集まって尿を排泄する場所はどれか。(33回)", "o": ["1. 腎皮質", "2. 腎錐体", "3. 腎盤(腎盂)", "4. 腎門"], "a": 3 },
+{ "q": "問19 ペイヤー板が見られるのはどこか。(33回)", "o": ["1. 十二指腸", "2. 空腸", "3. 回腸", "4. 大腸"], "a": 3 },
+{ "q": "問20 下垂体前葉から分泌されないホルモンはどれか。(33回)", "o": ["1. 成長ホルモン", "2. プロラクチン", "3. オキシトシン", "4. 促甲状腺ホルモン"], "a": 3 },
+{ "q": "問21 呼吸中枢や循環中枢があるのはどれか。(33回)", "o": ["1. 大脳", "2. 小脳", "3. 延髄", "4. 間脳"], "a": 3 },
+{ "q": "問22 膝関節の構成に関与しないのはどれか。(33回)", "o": ["1. 大腿骨", "2. 脛骨", "3. 腓骨", "4. 膝蓋骨"], "a": 3 },
+{ "q": "問23 聴覚の受容器があるのはどれか。(33回)", "o": ["1. 半規管", "2. 前庭", "3. 蝸牛", "4. 鼓膜"], "a": 3 },
+{ "q": "問15 血液脳関門を形成する細胞はどれか。(34回)", "o": ["1. 星状膠細胞", "2. 希突起膠細胞", "3. 小膠細胞", "4. シュワン細胞"], "a": 1 },
+{ "q": "問16 冠状動脈の起始部はどこか。(34回)", "o": ["1. 左心室", "2. 上行大動脈", "3. 大動脈弓", "4. 胸部大動脈"], "a": 2 },
+{ "q": "問17 ネフロンを構成しないのはどれか。(34回)", "o": ["1. 腎小体", "2. 近位尿細管", "3. 集合管", "4. ヘンレのループ"], "a": 3 },
+{ "q": "問18 手根骨の中で近位列に属さないのはどれか。(34回)", "o": ["1. 舟状骨", "2. 月状骨", "3. 三角骨", "4. 大多角骨"], "a": 4 },
+{ "q": "問19 外眼筋の中で、滑車神経に支配されるのはどれか。(34回)", "o": ["1. 上直筋", "2. 下直筋", "3. 上斜筋", "4. 外直筋"], "a": 3 },
+{ "q": "問20 上腕三頭筋の支配神経はどれか。(34回)", "o": ["1. 筋皮神経", "2. 正中神経", "3. 尺骨神経", "4. 橈骨神経"], "a": 4 },
+{ "q": "問21 消化管の壁の構造で、マイスネル神経叢があるのはどれか。(34回)", "o": ["1. 粘膜層", "2. 粘膜下層", "3. 筋層", "4. 漿膜層"], "a": 2 },
+{ "q": "問22 ラングハンス島(膵島)が多く存在するのはどこか。(34回)", "o": ["1. 膵頭部", "2. 膵体部", "3. 膵尾部", "4. 十二指腸乳頭"], "a": 3 },
+{ "q": "問23 平衡覚を司る受容器はどれか。(34回)", "o": ["1. 蝸牛", "2. 半規管", "3. 鼓膜", "4. 耳小骨"], "a": 2 }
+];
+let cur = 0, results = [];
+function show() {
+    const q = questions[cur];
+    document.getElementById('q-info').innerText = `解剖学：${cur + 1} / ${questions.length}`;
+    document.getElementById('q-text').innerText = q.q;
+    const div = document.getElementById('opts'); div.innerHTML = '';
+    q.o.forEach((o, i) => {
+        const b = document.createElement('button'); b.className = 'opt-btn';
+        b.innerText = o; b.onclick = () => { results.push(i + 1); cur++; cur < questions.length ? show() : finish(); };
+        div.appendChild(b);
+    });
+}
+function finish() {
+    document.getElementById('quiz-ui').style.display='none';
+    document.getElementById('res-ui').style.display='block';
+    let ok = 0; const list = document.getElementById('review-list');
+    questions.forEach((q, i) => {
+        const isOk = results[i] === q.a; if(isOk) ok++;
+        const card = document.createElement('div'); card.className = `card ${isOk ? 'ok' : 'ng'}`;
+        card.innerHTML = `<strong>問${i+1}: ${isOk ? '○' : '×'}</strong><br>${q.q}<br><small>正答: ${q.o[q.a-1]}</small>`;
+        list.appendChild(card);
+    });
+    const p = Math.round((ok/questions.length)*100);
+    document.getElementById('score-text').innerText = `${p}% (${ok}/${questions.length})`;
+    new Chart(document.getElementById('chart'), { type: 'doughnut', data: { datasets: [{ data: [ok, questions.length-ok], backgroundColor: ['#C62828', '#ddd'], borderWidth:0 }] } });
+}
+show();
+</script>
+</body>
+</html>
