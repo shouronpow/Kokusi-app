@@ -14,21 +14,26 @@ body { font-family: sans-serif; background: #f5f7f9; margin: 0; padding: 15px; d
 .card { padding: 15px; margin-bottom: 10px; border-radius: 10px; border-left: 8px solid; text-align: left; font-size: 0.9rem; }
 .ok { background: #d4edda; border-color: #28a745; color: #155724; }
 .ng { background: #f8d7da; border-color: #dc3545; color: #721c24; }
+.not-answered { background: #e9ecef; border-color: #6c757d; color: #495057; opacity: 0.7; }
 #review-list { max-height: 500px; overflow-y: auto; margin-top: 20px; border-top: 1px solid #eee; padding-top: 15px; }
+.stop-btn { margin-top: 20px; padding: 10px 20px; background: none; border: 1px solid #ccc; color: #999; border-radius: 8px; cursor: pointer; font-size: 0.8rem; }
+.stop-btn:hover { background: #eee; color: #666; }
 </style>
 </head>
 <body>
 <div id="app">
     <div id="quiz-ui">
-        <h1 style="color:var(--blue);">第34回 午後 (問91-180)</h1>
+        <h1 style="color:var(--blue);">第34回 午後 (91-180)</h1>
         <div id="q-info" style="color:#888; margin-bottom:10px;"></div>
         <div id="q-text" class="q-text"></div>
         <div id="opts"></div>
+        <button class="stop-btn" onclick="finish()">途中で終了して採点する</button>
     </div>
     <div id="res-ui" style="display:none;">
         <h1 style="color:var(--blue);">演習結果</h1>
         <div style="width:200px; height:200px; margin:auto;"><canvas id="chart"></canvas></div>
         <h2 id="score-text" style="font-size: 2.5rem; margin: 15px 0;"></h2>
+        <p id="progress-text" style="color:#666;"></p>
         <div id="review-list"></div>
         <button onclick="location.reload()" style="margin-top:25px; padding:18px 45px; background:var(--blue); color:white; border:none; border-radius:35px; font-weight:bold; cursor:pointer;">最初から解く</button>
         <button onclick="location.href='index.html'" style="display:block; margin: 15px auto; border:none; background:none; color:#666; cursor:pointer;">メニューへ戻る</button>
@@ -103,7 +108,7 @@ const questions = [
     { "q": "問題154 接触鍼の主な目的はどれか。", "o": ["1. 組織の破壊", "2. 強い響きの付与", "3. 微細な皮膚刺激", "4. 深部の筋肉緩和"], "a": 3 },
     { "q": "問題155 パルス鍼（電気鍼）の禁忌はどれか。", "o": ["1. 筋肉痛", "2. ペースメーカー装着者", "3. 関節痛", "4. 肩こり"], "a": 2 },
     { "q": "問題156 艾の原料となるヨモギの葉にある白い毛を何というか。", "o": ["1. 毛茸（もうじょう）", "2. 線毛", "3. 刺毛", "4. 腺毛"], "a": 1 },
-    { "q": "問題157 良質な艾の特徴はどれか。", "o": ["1. 色が暗い", "2. 灰分が多い", "3. 燃焼温度が低い", "4. 香りが悪い"], "a": 3 },
+    { "q": "問題157 艾の精製度について正しいのはどれか。", "o": ["1. 精製度が低いほど色は明るい。", "2. 精製度が高いほど燃焼温度は低い。", "3. 精製度が低いほど手触りは柔らかい。", "4. 精製度が高いほど灰分は多い。"], "a": 2 },
     { "q": "問題158 透熱灸の目的はどれか。", "o": ["1. 微細な組織の破壊と修復転換", "2. 温熱によるリラックス", "3. 跡を残さないこと", "4. 広い範囲を温めること"], "a": 1 },
     { "q": "問題159 知熱灸の目的はどれか。", "o": ["1. 温熱刺激による血流改善", "2. 組織の炭化", "3. 水疱の形成", "4. 瘢痕の形成"], "a": 1 },
     { "q": "問題160 隔物灸の隔物として用いられるのはどれか。", "o": ["1. 生姜", "2. にんにく", "3. 塩", "4. すべて正しい"], "a": 4 },
@@ -141,20 +146,45 @@ function show() {
         div.appendChild(b);
     });
 }
+
 function finish() {
     document.getElementById('quiz-ui').style.display='none';
     document.getElementById('res-ui').style.display='block';
-    let ok = 0; const list = document.getElementById('review-list');
+    let ok = 0; 
+    const answeredCount = results.length; 
+    const list = document.getElementById('review-list');
+    list.innerHTML = ''; 
+    
     questions.forEach((q, i) => {
-        const isOk = results[i] === q.a; if(isOk) ok++;
-        const card = document.createElement('div'); card.className = `card ${isOk ? 'ok' : 'ng'}`;
-        // 午後の表示番号を問91〜180に調整
-        card.innerHTML = `<strong>問${i+91}: ${isOk ? '○' : '×'}</strong><br>${q.q}<br><small>正答: ${q.o[q.a-1]}</small>`;
+        const card = document.createElement('div');
+        const qNum = i + 91; // 午後の表示番号
+
+        if (i < answeredCount) {
+            const isOk = results[i] === q.a;
+            if(isOk) ok++;
+            card.className = `card ${isOk ? 'ok' : 'ng'}`;
+            card.innerHTML = `<strong>問${qNum}: ${isOk ? '○' : '×'}</strong><br>${q.q}<br><small>正答: ${q.o[q.a-1]}</small>`;
+        } else {
+            card.className = `card not-answered`; 
+            card.innerHTML = `<strong>問${qNum}: 未回答</strong><br>${q.q}<br><small>正答: ${q.o[q.a-1]}</small>`;
+        }
         list.appendChild(card);
     });
-    const p = Math.round((ok/questions.length)*100);
-    document.getElementById('score-text').innerText = `${p}% (${ok}/${questions.length})`;
-    new Chart(document.getElementById('chart'), { type: 'doughnut', data: { datasets: [{ data: [ok, questions.length-ok], backgroundColor: ['#005BAC', '#ddd'], borderWidth:0 }] } });
+
+    const p = answeredCount > 0 ? Math.round((ok/answeredCount)*100) : 0;
+    document.getElementById('score-text').innerText = `正解率: ${p}%`;
+    document.getElementById('progress-text').innerText = `回答数: ${answeredCount} / 全${questions.length}問 (正解数: ${ok})`;
+    
+    new Chart(document.getElementById('chart'), { 
+        type: 'doughnut', 
+        data: { 
+            datasets: [{ 
+                data: [ok, answeredCount - ok, questions.length - answeredCount], 
+                backgroundColor: ['#005BAC', '#dc3545', '#eeeeee'], 
+                borderWidth:0 
+            }] 
+        } 
+    });
 }
 show();
 </script>
