@@ -3,17 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>第34回 鍼灸国試 午前(1-30) 復習機能版</title>
+    <title>第34回 鍼灸国試 午前(1-30) 完全復習版</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        :root { --blue: #005BAC; --light: #E6F0F8; --red: #dc3545; --green: #28a745; }
+        :root { --blue: #005BAC; --light: #E6F0F8; --red: #dc3545; }
         body { font-family: sans-serif; background: #f5f7f9; margin: 0; padding: 10px; display: flex; justify-content: center; }
         #app { background: white; width: 100%; max-width: 800px; border-radius: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); padding: 20px; text-align: center; }
         .q-text { font-weight: bold; font-size: 1.4rem; margin: 20px 0; line-height: 1.5; text-align: left; }
         .opt-btn { display: block; width: 100%; padding: 18px; margin-bottom: 10px; border: 2px solid var(--light); border-radius: 12px; background: white; text-align: left; font-size: 1.2rem; cursor: pointer; }
-        #advice-box { background: #eef; padding: 20px; border-radius: 15px; margin: 20px 0; color: #005BAC; font-weight: bold; border-left: 8px solid #005BAC; text-align: left; }
-        .review-item { text-align: left; padding: 15px; border-bottom: 1px solid #eee; margin-bottom: 10px; }
-        .review-q { font-weight: bold; color: #333; }
+        #advice-box { background: #eef; padding: 15px; border-radius: 12px; margin: 15px 0; color: #005BAC; font-weight: bold; border-left: 6px solid #005BAC; text-align: left; }
+        /* 復習エリアのスタイル */
+        #review-container { text-align: left; margin: 20px 0; padding: 15px; border: 2px solid var(--red); border-radius: 15px; background: #fffafa; }
+        .review-item { padding: 10px 0; border-bottom: 1px solid #eee; }
+        .review-item:last-child { border-bottom: none; }
+        .review-q { font-weight: bold; font-size: 1rem; color: #333; }
         .review-ans { color: var(--red); font-weight: bold; margin-top: 5px; }
     </style>
 </head>
@@ -27,20 +30,21 @@
     <div id="res-ui" style="display:none;">
         <h1 style="color:var(--blue);">演習結果</h1>
         <div id="advice-box"></div>
-        <div style="width:250px; height:250px; margin:auto;"><canvas id="chart"></canvas></div>
-        <h2 id="score-text"></h2>
         
-        <div id="review-list" style="margin-top:30px; border-top:2px solid var(--blue); padding-top:20px;">
-            <h3 style="color:var(--red);">🚩 間違えた問題の復習</h3>
-            <div id="wrong-answers"></div>
+        <h2 id="score-text" style="font-size: 2rem; margin: 10px 0;"></h2>
+        <div style="width:200px; height:200px; margin:auto;"><canvas id="chart"></canvas></div>
+
+        <div id="review-container">
+            <h3 style="color:var(--red); text-align:center; margin-top:0;">🚩 間違えた問題の復習</h3>
+            <div id="wrong-answers-list"></div>
         </div>
-        
-        <button onclick="location.reload()" style="margin-top:30px; padding:15px 40px; background:var(--blue); color:white; border:none; border-radius:30px; font-size:1.2rem; font-weight:bold; cursor:pointer;">最初から解く</button>
+
+        <button onclick="location.reload()" style="margin-top:20px; padding:15px 40px; background:var(--blue); color:white; border:none; border-radius:30px; font-size:1.2rem; font-weight:bold; cursor:pointer;">最初から解く</button>
     </div>
 </div>
 
 <script>
-[span_2](start_span)[span_3](start_span)// PDFおよび正答肢表に基づいた正確なデータ[span_2](end_span)[span_3](end_span)
+// PDFおよび正答肢表に基づいたデータ
 const questions = [
     {"id":1,"question":"我が国の2023年度の指定難病において、受給者証所持者数が最も多いのはどれか。","options":["1. パーキンソン病","2. 潰瘍性大腸炎","3. 全身性エリテマトーデス","4. クローン病"],"answer":1},
     {"id":2,"question":"あはき施術者の倫理について正しいのはどれか。","options":["1. 施術者本位の施術","2. 施術者の利益優先","3. 患者家族の要求優先","4. 患者の苦痛への共感"],"answer":4},
@@ -90,7 +94,7 @@ function showQuestion() {
 
 function next(sel) {
     const q = questions[currentIdx];
-    results.push({ question: q.question, options: q.options, correct: q.answer, selected: sel, isCorrect: sel === q.answer });
+    results.push({ qText: q.question, opts: q.options, correct: q.answer, selected: sel, isCorrect: sel === q.answer });
     currentIdx++;
     if (currentIdx < questions.length) { showQuestion(); } else { showResult(); }
 }
@@ -98,34 +102,37 @@ function next(sel) {
 function showResult() {
     document.getElementById('quiz-ui').style.display = 'none';
     document.getElementById('res-ui').style.display = 'block';
+    
     const score = results.filter(r => r.isCorrect).length;
-    const accuracy = (score / questions.length) * 100;
     document.getElementById('score-text').innerText = `得点: ${score} / ${questions.length}`;
 
-    // AIアドバイス
-    let msg = accuracy >= 80 ? "合格ライン突破！素晴らしい！" : (accuracy >= 60 ? "あと少し！復習しましょう。" : "基礎を固めましょう！");
+    // アドバイス
+    const acc = (score / questions.length) * 100;
+    let msg = acc >= 80 ? "合格ライン突破！" : "間違えた問題をチェックしましょう！";
     document.getElementById('advice-box').innerHTML = `💡 AIアドバイス：<br>${msg}`;
 
-    // 間違えた問題の表示
-    const wrongDiv = document.getElementById('wrong-answers');
-    wrongDiv.innerHTML = '';
-    const wrongQuestions = results.filter(r => !r.isCorrect);
+    // 復習リストの作成
+    const listDiv = document.getElementById('wrong-answers-list');
+    listDiv.innerHTML = '';
+    const wrongs = results.filter(r => !r.isCorrect);
     
-    if (wrongQuestions.length === 0) {
-        wrongDiv.innerHTML = '<p>全問正解です！完璧！</p>';
+    if(wrongs.length === 0) {
+        listDiv.innerHTML = '<p style="text-align:center;">全問正解！完璧です！</p>';
     } else {
-        wrongQuestions.forEach((r, idx) => {
-            const div = document.createElement('div');
-            div.className = 'review-item';
-            div.innerHTML = `<div class="review-q">Q: ${r.question}</div>
-                             <div class="review-ans">✅ 正解：${r.options[r.correct-1]}</div>`;
-            wrongDiv.appendChild(div);
+        wrongs.forEach(r => {
+            const item = document.createElement('div');
+            item.className = 'review-item';
+            item.innerHTML = `<div class="review-q">${r.qText}</div>
+                             <div class="review-ans">✅ 正解：${r.opts[r.correct-1]}</div>`;
+            listDiv.appendChild(item);
         });
     }
 
+    // グラフ描画
     new Chart(document.getElementById('chart'), {
         type: 'doughnut',
-        data: { labels: ['正解', '不正解'], datasets: [{ data: [score, questions.length - score], backgroundColor: ['#28a745', '#dc3545'] }] }
+        data: { labels: ['正解', '不正解'], datasets: [{ data: [score, questions.length - score], backgroundColor: ['#28a745', '#dc3545'] }] },
+        options: { responsive: true, maintainAspectRatio: false }
     });
 }
 showQuestion();
