@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>生理学 攻略</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+:root { --blue: #1565C0; --light: #E3F2FD; }
+body { font-family: sans-serif; background: #f0f4f8; margin: 0; padding: 15px; display: flex; justify-content: center; }
+#app { background: white; width: 100%; max-width: 800px; border-radius: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); padding: 25px; text-align: center; }
+.q-text { font-weight: bold; font-size: 1.2rem; margin: 20px 0; line-height: 1.6; text-align: left; white-space: pre-wrap; }
+.opt-btn { display: block; width: 100%; padding: 16px; margin-bottom: 12px; border: 2px solid #eee; border-radius: 12px; background: white; text-align: left; font-size: 1.1rem; cursor: pointer; transition: 0.2s; }
+.opt-btn:hover { background: var(--light); border-color: var(--blue); }
+.card { padding: 15px; margin-bottom: 10px; border-radius: 10px; border-left: 8px solid; text-align: left; font-size: 0.9rem; }
+.ok { background: #d4edda; border-color: #28a745; color: #155724; }
+.ng { background: #f8d7da; border-color: #dc3545; color: #721c24; }
+#review-list { max-height: 400px; overflow-y: auto; margin-top: 20px; border-top: 1px solid #eee; padding-top: 15px; }
+</style>
+</head>
+<body>
+<div id="app">
+    <div id="quiz-ui">
+        <h1 style="color:var(--blue);">生理学 (33-34回)</h1>
+        <div id="q-info" style="color:#888; margin-bottom:10px;"></div>
+        <div id="q-text" class="q-text"></div>
+        <div id="opts"></div>
+    </div>
+    <div id="res-ui" style="display:none;">
+        <h1 style="color:var(--blue);">演習結果</h1>
+        <div style="width:200px; height:200px; margin:auto;"><canvas id="chart"></canvas></div>
+        <h2 id="score-text" style="font-size: 2.5rem; margin: 15px 0;"></h2>
+        <div id="review-list"></div>
+        <button onclick="location.reload()" style="margin-top:25px; padding:18px 45px; background:var(--blue); color:white; border:none; border-radius:35px; font-weight:bold; cursor:pointer;">もう一度解く</button>
+        <button onclick="location.href='index.html'" style="display:block; margin: 15px auto; border:none; background:none; color:#666; cursor:pointer;">メニューへ戻る</button>
+    </div>
+</div>
+<script>
+const questions = [
+{ "q": "問27 血漿蛋白質の中で最も量が多いのはどれか。(33回)", "o": ["1. アルブミン", "2. グロブリン", "3. フィブリノゲン", "4. ヘモグロビン"], "a": 1 },
+{ "q": "問28 赤血球の寿命は約何日か。(33回)", "o": ["1. 30日", "2. 60日", "3. 120日", "4. 200日"], "a": 3 },
+{ "q": "問29 安静吸気時に働く主な筋肉はどれか。(33回)", "o": ["1. 内肋間筋", "2. 腹直筋", "3. 横隔膜", "4. 胸鎖乳突筋"], "a": 3 },
+{ "q": "問30 基礎代謝量が最も高い時期はどれか。(33回)", "o": ["1. 乳幼児期", "2. 思春期", "3. 成年期", "4. 老年期"], "a": 1 },
+{ "q": "問31 糖新生の主な場所はどれか。(33回)", "o": ["1. 筋肉", "2. 肝臓", "3. 脳", "4. 脂肪組織"], "a": 2 },
+{ "q": "問32 血糖値を低下させる唯一のホルモンはどれか。(33回)", "o": ["1. アドレナリン", "2. グルカゴン", "3. インスリン", "4. コルチゾール"], "a": 3 },
+{ "q": "問33 排卵を誘発するホルモンはどれか。(33回)", "o": ["1. エストロゲン", "2. プロゲステロン", "3. 黄体形成ホルモン(LH)", "4. 卵胞刺激ホルモン(FSH)"], "a": 3 },
+{ "q": "問34 伸張反射の受容器はどれか。(33回)", "o": ["1. 筋紡錘", "2. 腱器官", "3. パチニ小体", "4. 自由神経終末"], "a": 1 },
+{ "q": "問35 味覚の伝導路に関与しない脳神経はどれか。(33回)", "o": ["1. 顔面神経", "2. 舌咽神経", "3. 迷走神経", "4. 舌下神経"], "a": 4 },
+{ "q": "問27 血小板の機能について正しいのはどれか。(34回)", "o": ["1. 酸素運搬", "2. 血液凝固", "3. 抗体産生", "4. 食作用"], "a": 2 },
+{ "q": "問28 心拍出量を増加させる要因はどれか。(34回)", "o": ["1. 副交感神経興奮", "2. 血液量減少", "3. 交感神経興奮", "4. 徐脈"], "a": 3 },
+{ "q": "問29 肺胞でのガス交換の駆動源はどれか。(34回)", "o": ["1. 能動輸送", "2. 分圧差による拡散", "3. 浸透圧", "4. ろ過"], "a": 2 },
+{ "q": "問30 胃液分泌を抑制するのはどれか。(34回)", "o": ["1. ガストリン", "2. セクレチン", "3. ヒスタミン", "4. 迷走神経興奮"], "a": 2 },
+{ "q": "問31 胆汁の作用はどれか。(34回)", "o": ["1. 糖の分解", "2. 脂肪の乳化", "3. タンパク質の変性", "4. 核酸の分解"], "a": 2 },
+{ "q": "問32 特異動的作用が最も大きい栄養素はどれか。(34回)", "o": ["1. 糖質", "2. 脂質", "3. タンパク質", "4. ビタミン"], "a": 3 },
+{ "q": "問33 抗利尿ホルモン(ADH)が作用する主な部位はどれか。(34回)", "o": ["1. 糸球体", "2. 近位尿細管", "3. 集合管", "4. ボウマン嚢"], "a": 3 },
+{ "q": "問34 視覚の受容器があるのはどれか。(34回)", "o": ["1. 角膜", "2. 網膜", "3. 水晶体", "4. 虹彩"], "a": 2 },
+{ "q": "問35 シナプス伝達の特徴で正しいのはどれか。(34回)", "o": ["1. 双方向性", "2. 易疲労性", "3. 不減衰伝導", "4. 跳躍伝導"], "a": 2 }
+];
+let cur = 0, results = [];
+function show() {
+    const q = questions[cur];
+    document.getElementById('q-info').innerText = `生理学：${cur + 1} / ${questions.length}`;
+    document.getElementById('q-text').innerText = q.q;
+    const div = document.getElementById('opts'); div.innerHTML = '';
+    q.o.forEach((o, i) => {
+        const b = document.createElement('button'); b.className = 'opt-btn';
+        b.innerText = o; b.onclick = () => { results.push(i + 1); cur++; cur < questions.length ? show() : finish(); };
+        div.appendChild(b);
+    });
+}
+function finish() {
+    document.getElementById('quiz-ui').style.display='none';
+    document.getElementById('res-ui').style.display='block';
+    let ok = 0; const list = document.getElementById('review-list');
+    questions.forEach((q, i) => {
+        const isOk = results[i] === q.a; if(isOk) ok++;
+        const card = document.createElement('div'); card.className = `card ${isOk ? 'ok' : 'ng'}`;
+        card.innerHTML = `<strong>問${i+1}: ${isOk ? '○' : '×'}</strong><br>${q.q}<br><small>正答: ${q.o[q.a-1]}</small>`;
+        list.appendChild(card);
+    });
+    const p = Math.round((ok/questions.length)*100);
+    document.getElementById('score-text').innerText = `${p}% (${ok}/${questions.length})`;
+    new Chart(document.getElementById('chart'), { type: 'doughnut', data: { datasets: [{ data: [ok, questions.length-ok], backgroundColor: ['#1565C0', '#ddd'], borderWidth:0 }] } });
+}
+show();
+</script>
+</body>
+</html>
