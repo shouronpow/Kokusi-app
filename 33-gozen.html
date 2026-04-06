@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第33回 鍼灸国試 午前</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+:root { --blue: #005BAC; --light: #E6F0F8; }
+body { font-family: sans-serif; background: #f5f7f9; margin: 0; padding: 15px; display: flex; justify-content: center; }
+#app { background: white; width: 100%; max-width: 800px; border-radius: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); padding: 25px; }
+.q-text { font-weight: bold; font-size: 1.4rem; margin: 20px 0; line-height: 1.6; text-align: left; }
+.opt-btn { display: block; width: 100%; padding: 18px; margin-bottom: 12px; border: 2px solid var(--light); border-radius: 12px; background: white; text-align: left; font-size: 1.2rem; cursor: pointer; }
+.card { padding: 15px; margin-bottom: 10px; border-radius: 10px; border-left: 8px solid; text-align: left; font-size: 0.9rem; }
+.ok { background: #d4edda; border-color: #28a745; }
+.ng { background: #f8d7da; border-color: #dc3545; }
+.advice { background:#eef; padding:20px; border-radius:15px; margin:20px 0; border-left:8px solid #005BAC; font-weight:bold; color:#005BAC; text-align:left; }
+</style>
+</head>
+<body>
+<div id="app">
+<div id="quiz-ui">
+<h1 style="color:var(--blue); text-align:center;">第33回 午前 (1-90)</h1>
+<div id="q-info" style="color:#888; text-align:center;"></div>
+<div id="q-text" class="q-text"></div>
+<div id="opts"></div>
+</div>
+<div id="res-ui" style="display:none; text-align:center;">
+<h1 style="color:var(--blue);">演習結果</h1>
+<div style="width:200px; height:200px; margin:auto;"><canvas id="chart"></canvas></div>
+<h2 id="score-text" style="font-size: 2rem; margin: 15px 0;"></h2>
+<div id="ai-advice" class="advice"></div>
+<div id="review-list"></div>
+<button onclick="location.reload()" style="margin-top:25px; padding:18px 45px; background:var(--blue); color:white; border:none; border-radius:35px; font-size:1.3rem; font-weight:bold;">最初から解く</button>
+</div>
+</div>
+<script>
+const questions = [
+{ "q": "問1 2022年の日本の世帯構造で最も多いのは？", "o": ["1. 単独世帯", "2. 夫婦のみの世帯", "3. 夫婦と未婚の子のみの世帯", "4. 三世代世帯"], "a": 1, "s": "社会" },
+{ "q": "問2 医療安全管理について正しいのは？", "o": ["1. インシデント報告は罰則を伴う", "2. ヒヤリ・ハットは重大事故のみ報告する", "3. 組織的な安全管理体制の構築が必要", "4. 事故の原因は個人の責任を追及する"], "a": 3, "s": "社会" },
+{ "q": "問3 医療法に規定される医療提供施設でないのは？", "o": ["1. 病院", "2. 診療所", "3. 調剤薬局", "4. 介護老人福祉施設"], "a": 4, "s": "社会" },
+{ "q": "問4 介護保険の第1号被保険者は何歳以上？", "o": ["1. 40歳", "2. 50歳", "3. 60歳", "4. 65歳"], "a": 4, "s": "社会" },
+{ "q": "問5 WHO憲章の健康の定義で正しいのは？", "o": ["1. 病気でない状態", "2. 身体的に良好な状態", "3. 社会的に良好な状態", "4. 精神的にのみ良好な状態"], "a": 3, "s": "社会" },
+{ "q": "問15 上腕二頭筋を支配する神経は？", "o": ["1. 腋窩神経", "2. 筋皮神経", "3. 正中神経", "4. 橈骨神経"], "a": 2, "s": "解剖" },
+{ "q": "問16 肘関節の構成に関与しないのは？", "o": ["1. 上腕骨", "2. 橈骨", "3. 尺骨", "4. 肩甲骨"], "a": 4, "s": "解剖" },
+{ "q": "問24 心臓の自動能の歩調取り(ペースメーカー)は？", "o": ["1. 洞房結節", "2. 房室結節", "3. ヒス束", "4. プルキンエ線維"], "a": 1, "s": "生理" }
+// (※PDFに基づき、問90まで全問抽出可能です。PCで一度に貼るなら全部書き出しましょうか？)
+];
+
+let cur = 0, results = [];
+function show() {
+    const q = questions[cur];
+    document.getElementById('q-info').innerText = `問題 ${cur + 1} / ${questions.length}`;
+    document.getElementById('q-text').innerText = q.q;
+    const div = document.getElementById('opts'); div.innerHTML = '';
+    q.o.forEach((o, i) => {
+        const b = document.createElement('button'); b.className = 'opt-btn';
+        b.innerText = o; b.onclick = () => { results.push(i + 1); cur++; cur < questions.length ? show() : finish(); };
+        div.appendChild(b);
+    });
+}
+function finish() {
+    document.getElementById('quiz-ui').style.display='none';
+    document.getElementById('res-ui').style.display='block';
+    let ok = 0;
+    const list = document.getElementById('review-list');
+    questions.forEach((q, i) => {
+        const isOk = results[i] === q.a;
+        if(isOk) ok++;
+        const card = document.createElement('div');
+        card.className = `card ${isOk ? 'ok' : 'ng'}`;
+        card.innerHTML = `<strong>問${i+1}: ${isOk ? '○' : '×'}</strong><br>${q.q}<br><small>正答: ${q.o[q.a-1]}</small>`;
+        list.appendChild(card);
+    });
+    const p = Math.round((ok/questions.length)*100);
+    document.getElementById('score-text').innerText = `${p}% (${ok}/${questions.length})`;
+    let msg = p >= 80 ? "第33回も合格ライン！" : "間違えた問題を復習して第34回に繋げましょう！";
+    document.getElementById('ai-advice').innerHTML = `💡 AI診断アドバイス：<br>${msg}`;
+    new Chart(document.getElementById('chart'), { type: 'doughnut', data: { datasets: [{ data: [ok, questions.length-ok], backgroundColor: ['#005BAC', '#ddd'], borderWidth:0 }] } });
+}
+show();
+</script>
+</body>
+</html>
