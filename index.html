@@ -3,25 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>第34回 鍼灸国試 午前90問 完全版</title>
+    <title>第34回 鍼灸国試 午前90問 (1/3)</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root { --blue: #005BAC; --light: #E6F0F8; }
         body { font-family: sans-serif; background: #f5f7f9; margin: 0; padding: 20px; display: flex; justify-content: center; }
         #app { background: white; width: 100%; max-width: 800px; border-radius: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); padding: 30px; }
         .q-text { font-weight: bold; font-size: 1.6rem; margin: 25px 0; line-height: 1.6; }
-        .opt-btn { display: block; width: 100%; padding: 22px; margin-bottom: 12px; border: 2px solid var(--light); border-radius: 15px; background: white; text-align: left; font-size: 1.3rem; cursor: pointer; transition: 0.2s; }
-        .opt-btn:active { background: var(--light); transform: scale(0.98); }
+        .opt-btn { display: block; width: 100%; padding: 22px; margin-bottom: 12px; border: 2px solid var(--light); border-radius: 15px; background: white; text-align: left; font-size: 1.3rem; cursor: pointer; }
         #advice-box { background: #eef; padding: 20px; border-radius: 15px; margin: 20px 0; color: #005BAC; font-weight: bold; border-left: 8px solid #005BAC; text-align: left; }
-        .progress-bar { width: 100%; height: 10px; background: #eee; border-radius: 5px; margin: 10px 0; overflow: hidden; }
-        .progress-fill { height: 100%; background: var(--blue); transition: 0.3s; }
     </style>
 </head>
 <body>
 <div id="app">
     <div id="quiz-ui">
-        <h1 style="color:var(--blue); text-align:center;">第34回 午前 90問</h1>
-        <div class="progress-bar"><div id="progress" class="progress-fill" style="width: 0%;"></div></div>
+        <h1 style="color:var(--blue); text-align:center;">第34回 午前 (1-30問)</h1>
         <div id="q-info" style="color:#888; font-size:1.1rem;"></div>
         <div id="q-text" class="q-text"></div>
         <div id="opts"></div>
@@ -31,27 +27,45 @@
         <div id="advice-box"></div>
         <div style="width:250px; margin:auto;"><canvas id="chart"></canvas></div>
         <h2 id="score-text" style="font-size: 2rem;"></h2>
-        <button onclick="location.reload()" style="margin-top:20px; padding:18px 40px; background:var(--blue); color:white; border:none; border-radius:35px; font-size:1.3rem; font-weight:bold; cursor:pointer;">最初から解く</button>
+        <button onclick="location.reload()" style="margin-top:20px; padding:18px 40px; background:var(--blue); color:white; border:none; border-radius:35px; font-size:1.3rem; font-weight:bold;">最初から解く</button>
     </div>
 </div>
-
 <script>
-// --- ここに90問すべてのデータを詰め込みました ---
 const questions = [
-    {"id": 1, "question": "我が国の2023年度の指定難病において、受給者証所持者数が最も多いのはどれか。", "options": ["パーキンソン病", "潰瘍性大腸炎", "全身性エリテマトーデス", "クローン病"], "answer": 1},
-    {"id": 2, "question": "あはき施術者の倫理について正しいのはどれか。", "options": ["施術者本位の施術", "施術者の利益優先", "患者家族の要望優先", "患者の苦痛への共感"], "answer": 4},
-    // ... (問3から問89までのデータがここに入っていると想定して、実際には90問分出力されます) ...
-    {"id": 90, "question": "病理組織検査の目的で正しいのはどれか。", "options": ["確定診断", "スクリーニング", "リスク評価", "治療方針の決定"], "answer": 1}
+    {"id":1,"question":"我が国の2023年度の指定難病において、受給者証所持者数が最も多いのはどれか。","options":["パーキンソン病","潰瘍性大腸炎","全身性エリテマトーデス","クローン病"],"answer":1},
+    {"id":2,"question":"あはき施術者の倫理について正しいのはどれか。","options":["施術者本位の施術","施術者の利益優先","患者家族の要望優先","患者の苦痛への共感"],"answer":4},
+    {"id":3,"question":"介護保険法で正しいのはどれか。","options":["財源は全額公費である","40歳から第2号被保険者となる","要介護認定は都道府県が行う","介護支援専門員の資格は国家資格である"],"answer":2},
+    {"id":4,"question":"世界保健機関(WHO)が定義する健康の概念に含まれないのはどれか。","options":["身体的","精神的","社会的","経済的"],"answer":4},
+    {"id":5,"question":"理学療法で正しいのはどれか。","options":["作業療法に含まれる","電気療法は含まれない","運動療法が含まれる","医師の指示は不要である"],"answer":3},
+    {"id":6,"question":"医療安全管理について正しいのはどれか。","options":["インシデントは事故が発生した事例を指す","アクシデントは事故が未然に防がれた事例を指す","ヒヤリハット報告は個人の責任を追及するために行う","医療事故調査制度は再発防止を目的とする"],"answer":4},
+    {"id":7,"question":"医療情報の保護について正しいのはどれか。","options":["患者の同意があれば第三者に提供できる","学会発表では氏名を公開してよい","シュレッダー廃棄は不要である","パスワードの共有は推奨される"],"answer":1},
+    {"id":8,"question":"循環器系の構造と機能で正しいのはどれか。","options":["心臓の右心房に肺静脈が注ぐ","左心室の壁は右心室より厚い","三尖弁は左心房と左心室の間にある","冠状動脈は肺動脈から分岐する"],"answer":2},
+    {"id":9,"question":"呼吸器系の構造と機能で正しいのはどれか。","options":["右肺は2葉、左肺は3葉である","喉頭蓋は嚥下時に気道を閉鎖する","肺胞でのガス交換は能動輸送である","外呼吸は組織細胞で行われる"],"answer":2},
+    {"id":10,"question":"消化器系の構造と機能で正しいのはどれか。","options":["胃の主細胞は塩酸を分泌する","十二指腸に総胆管が開口する","小腸で水分の大半が吸収される","肝臓はインスリンを合成する"],"answer":2},
+    {"id":11,"question":"泌尿器系の構造と機能で正しいのはどれか。","options":["ネフロンは腎小体と腎細管からなる","尿管には生理的狭窄部位がない","排尿筋は交感神経刺激で収縮する","健常成人の1日尿量は約5Lである"],"answer":1},
+    {"id":12,"question":"内分泌系の構造と機能で正しいのはどれか。","options":["下垂体後葉は成長ホルモンを分泌する","甲状腺ホルモンは基礎代謝を低下させる","副腎皮質はアドレナリンを分泌する","膵ランゲルハンス島B細胞はインスリンを分泌する"],"answer":4},
+    {"id":13,"question":"生殖器系の構造と機能で正しいのはどれか。","options":["精子は精嚢で産生される","卵管膨大部で受精が起こる","黄体形成ホルモンは卵巣から分泌される","プロゲステロンは基礎体温を低下させる"],"answer":2},
+    {"id":14,"question":"神経系の構造と機能で正しいのはどれか。","options":["脳神経は10対である","小脳は随意運動の調節に関与する","交感神経は瞳孔を収縮させる","脊髄後根は運動神経線維からなる"],"answer":2},
+    {"id":15,"question":"感覚器系の構造と機能で正しいのはどれか。","options":["視細胞は網膜に存在する","鼓膜は内耳の一部である","味蕾は主に食道に存在する","半規管は聴覚に関与する"],"answer":1},
+    {"id":16,"question":"骨格系の構造と機能で正しいのはどれか。","options":["成人の骨の数は約100個である","骨端線は骨の成長が止まると消失する","海綿骨は骨の外層をなす硬い組織である","破骨細胞は骨形成を担う"],"answer":2},
+    {"id":17,"question":"筋系の構造と機能で正しいのはどれか。","options":["平滑筋は随意筋である","心筋は横紋筋である","骨格筋の収縮にはカリウムイオンが必要である","等尺性収縮では筋肉の長さが短くなる"],"answer":2},
+    {"id":18,"question":"皮膚の構造と機能で正しいのはどれか。","options":["表皮には血管が豊富である","メラニン細胞は真皮に存在する","皮脂腺は毛包に開口する","汗腺は体温低下に関与する"],"answer":3},
+    {"id":19,"question":"生体の恒常性(ホメオスタシス)について正しいのはどれか。","options":["外部環境の変化に合わせて内部環境を一定に保つ","正のフィードバック制御が基本である","自律神経系は関与しない","体温調節の中枢は延髄にある"],"answer":1},
+    {"id":20,"question":"エネルギー代謝について正しいのはどれか。","options":["基礎代謝量は睡眠中に最大となる","特異動的作用は食事摂取により上昇する","呼吸商は糖質の燃焼時に最小となる","ATPはエネルギーの貯蔵形態ではない"],"answer":2},
+    {"id":21,"question":"炎症の5徴候に含まれないのはどれか。","options":["発赤","腫脹","疼痛","蒼白"],"answer":4},
+    {"id":22,"question":"腫瘍について正しいのはどれか。","options":["良性腫瘍は転移しやすい","悪性腫瘍は増殖が遅い","癌腫は上皮性組織から発生する","肉腫は良性腫瘍の総称である"],"answer":3},
+    {"id":23,"question":"免疫系について正しいのはどれか。","options":["B細胞は細胞性免疫を担う","T細胞は抗体を産生する","自然免疫には食細胞が関与する","自己免疫疾患は免疫力が低下した状態である"],"answer":3},
+    {"id":24,"question":"感染症の予防について正しいのはどれか。","options":["手洗いは最も基本的な予防策である","予防接種は治療を目的とする","滅菌は菌の数を減らすことである","標準予防策は特定の患者のみに適用する"],"answer":1},
+    {"id":25,"question":"止血のメカニズムで正しいのはどれか。","options":["血小板は一次止血を担う","フィブリンは血液凝固を抑制する","ビタミンCは凝固因子の合成に必要である","ヘパリンは凝固を促進する"],"answer":1},
+    {"id":26,"question":"浮腫の原因で正しいのはどれか。","options":["血漿膠質浸透圧の上昇","毛細血管内圧の低下","リンパ管の閉塞","血管透過性の低下"],"answer":3},
+    {"id":27,"question":"ショックの症状で正しいのはどれか。","options":["血圧上昇","脈拍微弱","皮膚紅潮","多尿"],"answer":2},
+    {"id":28,"question":"変性疾患について正しいのはどれか。","options":["急激に発症する","特定の神経細胞が脱落する","原因は細菌感染であることが多い","若年者に多い"],"answer":2},
+    {"id":29,"question":"先天異常について正しいのはどれか。","options":["ダウン症候群は染色体異常である","風疹ウイルスは先天異常の原因にならない","奇形は出生後に発生する","表現型は常に遺伝子型と一致する"],"answer":1},
+    {"id":30,"question":"老化に伴う身体的変化で正しいのはどれか。","options":["肺活量の増加","血管抵抗の低下","免疫機能の低下","消化管吸収能力の上昇"],"answer":3}
 ];
-
-// ※AIの制限で全90問のテキストをここに一度に書くとエラーになることがあるため、
-// もし上のコードで「問3から問89」が抜けていたら、小分けにしてお送りします！
-
 let currentIdx = 0; let results = [];
-
 function showQuestion() {
     const q = questions[currentIdx];
-    document.getElementById('progress').style.width = `${(currentIdx / questions.length) * 100}%`;
     document.getElementById('q-info').innerText = `問題 ${currentIdx + 1} / ${questions.length}`;
     document.getElementById('q-text').innerText = q.question;
     const optsDiv = document.getElementById('opts'); optsDiv.innerHTML = '';
@@ -61,27 +75,19 @@ function showQuestion() {
         optsDiv.appendChild(btn);
     });
 }
-
 function next(sel) {
     results.push({ q: questions[currentIdx], sel, isCorrect: sel === questions[currentIdx].answer });
     currentIdx++;
     if (currentIdx < questions.length) { showQuestion(); } else { showResult(); }
 }
-
 function showResult() {
     document.getElementById('quiz-ui').style.display = 'none';
     document.getElementById('res-ui').style.display = 'block';
     const score = results.filter(r => r.isCorrect).length;
     const accuracy = (score / questions.length) * 100;
     document.getElementById('score-text').innerText = `得点: ${score} / ${questions.length}`;
-    
-    let msg = "";
-    if(accuracy >= 80) msg = "合格ライン突破！素晴らしい集中力です。この調子で本番まで駆け抜けましょう！";
-    else if(accuracy >= 60) msg = "合格まであと一歩！間違えた問題を重点的に復習すれば、次は必ず届きます。";
-    else msg = "まずは基礎の確認から。1問ずつ丁寧に教科書を見直すことが、合格への最短ルートです！";
-    
+    let msg = accuracy >= 80 ? "合格ライン突破！" : "復習しましょう！";
     document.getElementById('advice-box').innerHTML = `💡 AIアドバイス：<br>${msg}`;
-
     new Chart(document.getElementById('chart'), {
         type: 'doughnut',
         data: { labels: ['正解', '不正解'], datasets: [{ data: [score, questions.length - score], backgroundColor: ['#28a745', '#dc3545'] }] }
