@@ -1,89 +1,28 @@
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>第34回 鍼灸国試 午前</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<style>
-:root { --blue: #005BAC; --light: #E6F0F8; }
-body { font-family: sans-serif; background: #f5f7f9; margin: 0; padding: 15px; display: flex; justify-content: center; }
-#app { background: white; width: 100%; max-width: 800px; border-radius: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); padding: 25px; text-align: center; }
-.q-text { font-weight: bold; font-size: 1.3rem; margin: 20px 0; line-height: 1.6; text-align: left; }
-.opt-btn { display: block; width: 100%; padding: 18px; margin-bottom: 12px; border: 2px solid var(--light); border-radius: 12px; background: white; text-align: left; font-size: 1.1rem; cursor: pointer; transition: 0.2s; }
-.opt-btn:hover { background: var(--light); border-color: var(--blue); }
-#review-list { max-height: 400px; overflow-y: auto; margin-top: 20px; border-top: 2px solid var(--light); padding-top: 15px; }
-.card { padding: 15px; margin-bottom: 10px; border-radius: 10px; border-left: 8px solid; text-align: left; font-size: 0.9rem; }
-.ok { background: #d4edda; border-color: #28a745; color: #155724; }
-.ng { background: #f8d7da; border-color: #dc3545; color: #721c24; }
-.advice { background:#eef; padding:20px; border-radius:15px; margin:20px 0; border-left:8px solid #005BAC; font-weight:bold; color:#005BAC; text-align:left; line-height:1.6; }
-</style>
-</head>
-<body>
-<div id="app">
-    <div id="quiz-ui">
-        <h1 style="color:var(--blue);">第34回 午前 (1-90)</h1>
-        <div id="q-info" style="color:#888; margin-bottom:10px;"></div>
-        <div id="q-text" class="q-text"></div>
-        <div id="opts"></div>
-    </div>
-    <div id="res-ui" style="display:none;">
-        <h1 style="color:var(--blue);">演習結果</h1>
-        <div style="width:200px; height:200px; margin:auto;"><canvas id="chart"></canvas></div>
-        <h2 id="score-text" style="font-size: 2rem; margin: 15px 0;"></h2>
-        <div id="ai-advice" class="advice"></div>
-        <div id="review-list"></div>
-        <button onclick="location.reload()" style="margin-top:25px; padding:18px 45px; background:var(--blue); color:white; border:none; border-radius:35px; font-size:1.2rem; font-weight:bold; cursor:pointer;">最初から解く</button>
-        <button onclick="location.href='index.html'" style="margin-top:10px; padding:10px 20px; background:#666; color:white; border:none; border-radius:35px; font-size:1rem; cursor:pointer;">メニューに戻る</button>
-    </div>
-</div>
-
-<script>
 const questions = [
-{ "q": "問1 2023年度の指定難病受給者証所持者数が最も多いのは？", "o": ["1. パーキンソン病", "2. 潰瘍性大腸炎", "3. 全身性エリテマトーデス", "4. クローン病"], "a": 1, "s": "社会" },
-{ "q": "問2 あはき施術者の倫理について正しいのはどれか。", "o": ["1. 施術者本位の施術", "2. 施術者の利益優先", "3. 患者家族の要求優先", "4. 患者の苦痛への共感"], "a": 4, "s": "社会" },
-{ "q": "問3 名称独占に加えて業務独占を伴うのは？", "o": ["1. 理学療法士", "2. 作業療法士", "3. 保健師", "4. 看護師"], "a": 4, "s": "社会" },
-{ "q": "問4 介護保険制度について正しいのはどれか。", "o": ["1. 保険者は都道府県", "2. 被保険者は75歳以上", "3. 要介護の認定区分は5つ", "4. 報酬改定は毎年"], "a": 3, "s": "社会" },
-{ "q": "問5 自然に健康になれる環境づくりは何次予防？", "o": ["1. 0次予防", "2. 1次予防", "3. 2次予防", "4. 3次予防"], "a": 1, "s": "社会" },
-{ "q": "問15 上肢の神経走行について正しいのはどれか。", "o": ["1. 筋皮-解剖頸", "2. 正中-結節間溝", "3. 尺骨-外側上顆後面", "4. 橈骨-上腕骨体後面"], "a": 4, "s": "解剖" },
-{ "q": "問16 腹部の筋について適切なのはどれか。", "o": ["1. 内腹斜-吸気", "2. 腹直-腰神経支配", "3. 腹横-精巣挙筋形成", "4. 外腹斜-鼠径靭帯形成"], "a": 4, "s": "解剖" },
-{ "q": "問24 肝臓について正しいのはどれか。", "o": ["1. クッパー-VitA貯蔵", "2. アルブミン生成", "3. 熱産生-腎より少", "4. 門脈から流出"], "a": 2, "s": "生理" },
-{ "q": "問90 診断確定のために行う検査はどれか。", "o": ["1. 病理組織検査", "2. CT検査", "3. PET検査", "4. MRI検査"], "a": 1, "s": "症例" }
-// (※全問データが含まれています)
-];
-
-let cur = 0, results = [];
-function show() {
-    const q = questions[cur];
-    document.getElementById('q-info').innerText = `問題 ${cur + 1} / ${questions.length}`;
-    document.getElementById('q-text').innerText = q.q;
-    const div = document.getElementById('opts'); div.innerHTML = '';
-    q.o.forEach((o, i) => {
-        const b = document.createElement('button'); b.className = 'opt-btn';
-        b.innerText = o; b.onclick = () => { results.push(i + 1); cur++; cur < questions.length ? show() : finish(); };
-        div.appendChild(b);
-    });
-}
-function finish() {
-    document.getElementById('quiz-ui').style.display='none';
-    document.getElementById('res-ui').style.display='block';
-    let ok = 0;
-    const list = document.getElementById('review-list');
-    questions.forEach((q, i) => {
-        const isOk = results[i] === q.a;
-        if(isOk) ok++;
-        const card = document.createElement('div');
-        card.className = `card ${isOk ? 'ok' : 'ng'}`;
-        card.innerHTML = `<strong>問${i+1}: ${isOk ? '○' : '×'}</strong><br>${q.q}<br><small>正答: ${q.o[q.a-1]}</small>`;
-        list.appendChild(card);
-    });
-    const p = Math.round((ok/questions.length)*100);
-    document.getElementById('score-text').innerText = `${p}% (${ok}/${questions.length})`;
-    let msg = p >= 80 ? "【AI診断】合格圏内です！" : "【AI診断】間違えた箇所を復習しましょう。";
-    document.getElementById('ai-advice').innerHTML = msg;
-    new Chart(document.getElementById('chart'), { type: 'doughnut', data: { datasets: [{ data: [ok, questions.length-ok], backgroundColor: ['#005BAC', '#ddd'], borderWidth:0 }] } });
-}
-show();
-</script>
-</body>
-</html>
+{ "q": "問題 1 我が国の2023年度の指定難病において、受給者証所持者数が最も多いのはどれか。", "o": ["1. パーキンソン病", "2. 潰瘍性大腸炎", "3. 全身性エリテマトーデス", "4. クローン病"], "a": 2 },
+{ "q": "問題 2 あはき施術者の倫理について正しいのはどれか。", "o": ["1. 施術者本位の施術", "2. 施術者の利益優先", "3. 患者家族の要求優先", "4. 患者の苦痛への共感"], "a": 4 },
+{ "q": "問題 3 名称独占に加えて、業務独占を伴う医療従事者はどれか。", "o": ["1. 理学療法士", "2. 作業療法士", "3. 保健師", "4. 看護師"], "a": 4 },
+{ "q": "問題 4 介護保険制度について正しいのはどれか。", "o": ["1. 保険者は都道府県である。", "2. 被保険者は75歳以上である。", "3. 要介護の認定区分は5つである。", "4. 介護報酬の改定は毎年行われる。"], "a": 3 },
+{ "q": "問題 5 健康日本21(第三次)で示された「自然に健康になれる環境づくり」に相当する疾病の予防段階はどれか。", "o": ["1. 0次予防", "2. 1次予防", "3. 2次予防", "4. 3次予防"], "a": 1 },
+{ "q": "問題 6 我が国の2023年度の児童虐待相談において、主な虐待者として最も多いのはどれか。", "o": ["1. 実母", "2. 実父", "3. 実母以外の母親", "4. 実父以外の父親"], "a": 1 },
+{ "q": "問題 7 結核患者が使用した食器の洗浄に用いるのに、必要かつ十分なのはどれか。", "o": ["1. ビグアナイド系消毒剤", "2. 塩素系消毒剤", "3. 逆性石けん", "4. 中性洗剤"], "a": 4 },
+{ "q": "問題 8 精神保健福祉法に基づく緊急措置入院における入院期限として正しいのはどれか。", "o": ["1. 24時間", "2. 72時間", "3. 1週間", "4. 1か月間"], "a": 2 },
+{ "q": "問題 9 小学校就学予定者に対する就学時健康診断を行うのはどれか。", "o": ["1. 学校", "2. 保健所", "3. 都道府県医師会", "4. 市町村教育委員会"], "a": 4 },
+{ "q": "問題 10 ある一時点での集団内における特定の病気をもつ者の割合を示す疫学指標はどれか。", "o": ["1. 罹患率", "2. 有病率", "3. 偽陽性率", "4. 偽陰性率"], "a": 2 },
+{ "q": "問題 11 あはき法で、はり師、きゅう師の免許の効力が発生するのはどれか。", "o": ["1. 学校または養成施設を卒業したとき", "2. はり師、きゅう師国家試験に合格したとき", "3. はり師、きゅう師名簿に登録されたとき", "4. 施術所開設の届出が受け付けられたとき"], "a": 3 },
+{ "q": "問題 12 あはき法で、業務開始の届出が必要なのはどれか。", "o": ["1. 専ら出張のみによって業務を行う施術者", "2. 自らの施術所の開設届出を済ませている施術者", "3. 施術所で新たに雇われる施術者", "4. 自らの施術所の施術料金の改定をした施術者"], "a": 1 },
+{ "q": "問題 13 あはき法に基づいて罰金に処せられる行為はどれか。", "o": ["1. 外科手術", "2. 薬品投与", "3. 薬品投与の指示", "4. はり施術部位の消毒義務違反"], "a": 4 },
+{ "q": "問題 14 特定健康診査について定めている法律はどれか。", "o": ["1. 医療法", "2. 健康増進法", "3. 地域保健法", "4. 高齢者の医療の確保に関する法律"], "a": 4 },
+{ "q": "問題 15 上肢の神経の走行について正しいのはどれか。", "o": ["1. 筋皮神経は上腕骨解剖頸に沿って走行する。", "2. 正中神経は上腕骨結節間溝を通る。", "3. 尺骨神経は上腕骨外側上顆後面を通る。", "4. 橈骨神経は上腕骨体後面を通る。"], "a": 4 },
+{ "q": "問題 16 腹部の筋について最も適切なのはどれか。", "o": ["1. 内腹斜筋は吸気に働く。", "2. 腹直筋は腰神経で支配される。", "3. 腹横筋下端の筋束は精巣挙筋を形成する。", "4. 外腹斜筋の停止腱膜の肥厚部が鼠径靱帯である。"], "a": 4 },
+{ "q": "問題 17 内転筋管を通過するのはどれか。", "o": ["1. 膝窩動脈", "2. 大腿動脈", "3. 大腿深動脈", "4. 閉鎖動脈"], "a": 2 },
+{ "q": "問題 18 男性生殖器について正しいのはどれか。", "o": ["1. ライディッヒ細胞は男性ホルモンを分泌する。", "2. 左右の精管が合流して射精管になる。", "3. 前立腺は膀胱の後面に位置する。", "4. 尿道球腺は骨盤隔膜内に位置する。"], "a": 1 },
+{ "q": "問題 19 ランゲルハンス島について正しいのはどれか。", "o": ["1. 膵頭部に多い。", "2. 濾胞を形成する。", "3. 細胞は80%を占める。", "4. β細胞はインスリンを分泌する。"], "a": 4 },
+{ "q": "問題 20 視覚伝導路について正しいのはどれか。", "o": ["1. 対光反射は下丘を経由する。", "2. 視覚情報は内側膝状体で中継される。", "3. 各眼球の視野の左側半からの情報は右脳へ送られる。", "4. 各眼球の耳側半(外側半)の網膜からの線維は視交叉で交叉する。"], "a": 3 },
+{ "q": "問題 21 仙骨神経叢に由来するのはどれか。", "o": ["1. 陰部神経", "2. 閉鎖神経", "3. 腸骨鼠径神経", "4. 陰部大腿神経"], "a": 1 },
+{ "q": "問題 22 涙腺に分布する節後線維の細胞体があるのはどれか。", "o": ["1. 耳神経節", "2. 顎下神経節", "3. 毛様体神経節", "4. 翼口蓋神経節"], "a": 4 },
+{ "q": "問題 23 細胞間接着装置で、細胞間隙を塞いで水や分子の通過のバリアとなるのはどれか。", "o": ["1. 接着带", "2. タイト結合", "3. ギャップ結合", "4. デスモソーム"], "a": 2 },
+{ "q": "問題 24 肝臓について正しいのはどれか。", "o": ["1. クッパー細胞はビタミンAを貯蔵する。", "2. 肝細胞はアルブミンを生成する。", "3. 肝臓の熱産生は腎臓より少ない。", "4. 肝臓の血液は門脈から流出する。"], "a": 2 },
+{ "q": "問題 25 心臓の収縮期における内圧が最も低いのはどれか。", "o": ["1. 上大静脈", "2. 上行大動脈", "3. 顏面動脈", "4. 左心室"], "a": 1 },
+{ "q": "問題 26 肺活量を表す計算式はどれか。", "o": ["1. 1回換気量+予備吸気量+予備呼気量", "2. 1回換気量+予備呼気量+残気量", "3. 1回換気量+予備吸気量", "4. 1回換気量+残気量"], "a": 1 },
+{ "q": "問題 27 糖質について正しいのはどれか。", "o": ["1. セルロースは単糖類である。", "2. 血液中のガラクトースの濃度を血糖値という。", "
