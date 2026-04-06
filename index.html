@@ -3,20 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>第34回 鍼灸国試 午前(1-30)</title>
+    <title>第34回 鍼灸国試 午前(1-30) AI版</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root { --blue: #005BAC; --light: #E6F0F8; }
-        body { font-family: sans-serif; background: #f5f7f9; margin: 0; padding: 10px; display: flex; justify-content: center; }
-        #app { background: white; width: 100%; max-width: 800px; border-radius: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); padding: 20px; }
+        body { font-family: sans-serif; background: #f5f7f9; padding: 10px; display: flex; justify-content: center; }
+        #app { background: white; width: 100%; max-width: 800px; border-radius: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); padding: 20px; text-align: center; }
         .q-text { font-weight: bold; font-size: 1.4rem; margin: 20px 0; line-height: 1.5; text-align: left; }
         .opt-btn { display: block; width: 100%; padding: 18px; margin-bottom: 10px; border: 2px solid var(--light); border-radius: 12px; background: white; text-align: left; font-size: 1.2rem; cursor: pointer; }
-        #advice-box { background: #eef; padding: 15px; border-radius: 12px; margin: 15px 0; color: #005BAC; font-weight: bold; border-left: 6px solid #005BAC; text-align: left; }
+        #advice-box { background: #eef; padding: 20px; border-radius: 15px; margin: 20px 0; color: #005BAC; font-weight: bold; border-left: 8px solid #005BAC; text-align: left; font-size: 1.1rem; }
     </style>
 </head>
 <body>
-<div id="app"><div id="quiz-ui"><h2 id="q-info" style="color:#888;"></h2><div id="q-text" class="q-text"></div><div id="opts"></div></div><div id="res-ui" style="display:none; text-align:center;"><h1 style="color:var(--blue);">演習結果</h1><div id="advice-box"></div><div style="width:200px; margin:auto;"><canvas id="chart"></canvas></div><h2 id="score-text"></h2><button onclick="location.reload()" style="margin-top:20px; padding:15px 30px; background:var(--blue); color:white; border:none; border-radius:30px; font-size:1.2rem; font-weight:bold;">最初から解く</button></div></div>
+<div id="app">
+    <div id="quiz-ui">
+        <h2 id="q-info" style="color:#888;"></h2>
+        <div id="q-text" class="q-text"></div>
+        <div id="opts"></div>
+    </div>
+    <div id="res-ui" style="display:none;">
+        <h1 style="color:var(--blue);">演習結果</h1>
+        <div id="advice-box"></div>
+        <div style="width:250px; margin:auto;"><canvas id="chart"></canvas></div>
+        <h2 id="score-text" style="font-size:2rem; margin:20px 0;"></h2>
+        <button onclick="location.reload()" style="padding:15px 40px; background:var(--blue); color:white; border:none; border-radius:30px; font-size:1.2rem; font-weight:bold; cursor:pointer;">最初から解く</button>
+    </div>
+</div>
+
 <script>
+[span_1](start_span)[span_2](start_span)// PDFおよび正答肢表に基づいた正確なデータ[span_1](end_span)[span_2](end_span)
 const questions = [
     {"id":1,"question":"我が国の2023年度の指定難病において、受給者証所持者数が最も多いのはどれか。","options":["1. パーキンソン病","2. 潰瘍性大腸炎","3. 全身性エリテマトーデス","4. クローン病"],"answer":1},
     {"id":2,"question":"あはき施術者の倫理について正しいのはどれか。","options":["1. 施術者本位の施術","2. 施術者の利益優先","3. 患者家族の要求優先","4. 患者の苦痛への共感"],"answer":4},
@@ -30,7 +45,7 @@ const questions = [
     {"id":10,"question":"ある一時点での集団内における特定の病気をもつ者の割合を示す疫学指標はどれか。","options":["1. 罹患率","2. 有病率","3. 偽陽性率","4. 偽陰性率"],"answer":2},
     {"id":11,"question":"あはき法で、はり師、きゅう師の免許の効力が発生するのはどれか。","options":["1. 学校または養成施設を卒業したとき","2. はり師、きゅう師国家試験に合格したとき","3. はり師、きゅう師名簿に登録されたとき","4. 施術所開設の届出が受け付けられたとき"],"answer":3},
     {"id":12,"question":"あはき法で、業務開始の届出が必要なのはどれか。","options":["1. 専ら出張のみによって業務を行う施術者","2. 自らの施術所の開設届出を済ませている施術者","3. 施術所で新たに雇われる施術者","4. 自らの施術所の施術料金の改定をした施術者"],"answer":1},
-    {"id":13,"question":"あはき法に基づいて罰金に処せられる行為はどれか。","options":["1. 外科手術","2. 薬品投与","3. 薬品投与の指示","4. はり施術部位의消毒義務違反"],"answer":4},
+    {"id":13,"question":"あはき法に基づいて罰金に処せられる行為はどれか。","options":["1. 外科手術","2. 薬品投与","3. 薬品投与の指示","4. はり施術部位の消毒義務違反"],"answer":4},
     {"id":14,"question":"特定健康診査について定めている法律はどれか。","options":["1. 医療法","2. 健康増進法","3. 地域保健法","4. 高齢者の医療の確保に関する法律"],"answer":4},
     {"id":15,"question":"上肢の神経の走行について正しいのはどれか。","options":["1. 筋皮神経は上腕骨解剖頸に沿って走行する。","2. 正中神経は上腕骨結節間溝を通る。","3. 尺骨神経は上腕骨外側上顆後面を通る。","4. 橈骨神経は上腕骨体後面を通る。"],"answer":4},
     {"id":16,"question":"腹部の筋について最も適切なのはどれか。","options":["1. 内腹斜筋は吸気に働く。","2. 腹直筋は腰神経で支配される。","3. 腹横筋下端の筋束は精巣挙筋を形成する。","4. 外腹斜筋の停止腱膜の肥厚部が鼠径靱帯である。"],"answer":4},
@@ -49,7 +64,9 @@ const questions = [
     {"id":29,"question":"バソプレシンについて正しいのはどれか。","options":["1. ステロイドホルモンである。","2. 下垂体前葉から分泌される。","3. 腎臓の集合管における水の再吸収を促す。","4. 血漿浸透圧が低下すると分泌が増加する。"],"answer":3},
     {"id":30,"question":"性周期において卵胞期に起こるのはどれか。","options":["1. 受精卵の着床","2. 子宮内膜の肥厚","3. 基礎体温の上昇","4. プロゲステロン分泌の増加"],"answer":2}
 ];
+
 let currentIdx = 0; let results = [];
+
 function showQuestion() {
     const q = questions[currentIdx];
     document.getElementById('q-info').innerText = `問題 ${currentIdx + 1} / ${questions.length}`;
@@ -61,22 +78,35 @@ function showQuestion() {
         optsDiv.appendChild(btn);
     });
 }
+
 function next(sel) {
-    results.push({ q: questions[currentIdx], sel, isCorrect: sel === questions[currentIdx].answer });
+    results.push({ isCorrect: sel === questions[currentIdx].answer });
     currentIdx++;
     if (currentIdx < questions.length) { showQuestion(); } else { showResult(); }
 }
+
 function showResult() {
     document.getElementById('quiz-ui').style.display = 'none';
     document.getElementById('res-ui').style.display = 'block';
     const score = results.filter(r => r.isCorrect).length;
     const accuracy = (score / questions.length) * 100;
     document.getElementById('score-text').innerText = `得点: ${score} / ${questions.length}`;
-    let msg = accuracy >= 80 ? "合格ライン突破！" : "復習しましょう！";
+
+    // AIアドバイスの生成
+    let msg = "";
+    if(accuracy >= 80) msg = "素晴らしい！合格ライン突破です。この調子で本番まで突き進みましょう！";
+    else if(accuracy >= 60) msg = "あと一歩！間違えた問題を復習すれば、確実に合格圏内に入れます。";
+    else msg = "まずは基礎の確認から始めましょう。教科書を読み直すのが合格への近道です！";
     document.getElementById('advice-box').innerHTML = `💡 AIアドバイス：<br>${msg}`;
+
+    // グラフの描画
     new Chart(document.getElementById('chart'), {
         type: 'doughnut',
-        data: { labels: ['正解', '不正解'], datasets: [{ data: [score, questions.length - score], backgroundColor: ['#28a745', '#dc3545'] }] }
+        data: {
+            labels: ['正解', '不正解'],
+            datasets: [{ data: [score, questions.length - score], backgroundColor: ['#28a745', '#dc3545'] }]
+        },
+        options: { responsive: true, maintainAspectRatio: false }
     });
 }
 showQuestion();
