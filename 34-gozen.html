@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第34回 鍼灸国試 午前</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+:root { --blue: #005BAC; --light: #E6F0F8; }
+body { font-family: sans-serif; background: #f5f7f9; margin: 0; padding: 15px; display: flex; justify-content: center; }
+#app { background: white; width: 100%; max-width: 800px; border-radius: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); padding: 25px; text-align: center; }
+.q-text { font-weight: bold; font-size: 1.3rem; margin: 20px 0; line-height: 1.6; text-align: left; }
+.opt-btn { display: block; width: 100%; padding: 18px; margin-bottom: 12px; border: 2px solid var(--light); border-radius: 12px; background: white; text-align: left; font-size: 1.1rem; cursor: pointer; transition: 0.2s; }
+.opt-btn:hover { background: var(--light); border-color: var(--blue); }
+#review-list { max-height: 400px; overflow-y: auto; margin-top: 20px; border-top: 2px solid var(--light); padding-top: 15px; }
+.card { padding: 15px; margin-bottom: 10px; border-radius: 10px; border-left: 8px solid; text-align: left; font-size: 0.9rem; }
+.ok { background: #d4edda; border-color: #28a745; color: #155724; }
+.ng { background: #f8d7da; border-color: #dc3545; color: #721c24; }
+.advice { background:#eef; padding:20px; border-radius:15px; margin:20px 0; border-left:8px solid #005BAC; font-weight:bold; color:#005BAC; text-align:left; line-height:1.6; }
+</style>
+</head>
+<body>
+<div id="app">
+    <div id="quiz-ui">
+        <h1 style="color:var(--blue);">第34回 午前 (1-90)</h1>
+        <div id="q-info" style="color:#888; margin-bottom:10px;"></div>
+        <div id="q-text" class="q-text"></div>
+        <div id="opts"></div>
+    </div>
+    <div id="res-ui" style="display:none;">
+        <h1 style="color:var(--blue);">演習結果</h1>
+        <div style="width:200px; height:200px; margin:auto;"><canvas id="chart"></canvas></div>
+        <h2 id="score-text" style="font-size: 2rem; margin: 15px 0;"></h2>
+        <div id="ai-advice" class="advice"></div>
+        <div id="review-list"></div>
+        <button onclick="location.reload()" style="margin-top:25px; padding:18px 45px; background:var(--blue); color:white; border:none; border-radius:35px; font-size:1.2rem; font-weight:bold; cursor:pointer;">最初から解く</button>
+        <button onclick="location.href='index.html'" style="margin-top:10px; padding:10px 20px; background:#666; color:white; border:none; border-radius:35px; font-size:1rem; cursor:pointer;">メニューに戻る</button>
+    </div>
+</div>
+
+<script>
+const questions = [
+{ "q": "問1 2023年度の指定難病受給者証所持者数が最も多いのは？", "o": ["1. パーキンソン病", "2. 潰瘍性大腸炎", "3. 全身性エリテマトーデス", "4. クローン病"], "a": 1, "s": "社会" },
+{ "q": "問2 あはき施術者の倫理について正しいのはどれか。", "o": ["1. 施術者本位の施術", "2. 施術者の利益優先", "3. 患者家族の要求優先", "4. 患者の苦痛への共感"], "a": 4, "s": "社会" },
+{ "q": "問3 名称独占に加えて業務独占を伴うのは？", "o": ["1. 理学療法士", "2. 作業療法士", "3. 保健師", "4. 看護師"], "a": 4, "s": "社会" },
+{ "q": "問4 介護保険制度について正しいのはどれか。", "o": ["1. 保険者は都道府県", "2. 被保険者は75歳以上", "3. 要介護の認定区分は5つ", "4. 報酬改定は毎年"], "a": 3, "s": "社会" },
+{ "q": "問5 自然に健康になれる環境づくりは何次予防？", "o": ["1. 0次予防", "2. 1次予防", "3. 2次予防", "4. 3次予防"], "a": 1, "s": "社会" },
+{ "q": "問15 上肢の神経走行について正しいのはどれか。", "o": ["1. 筋皮-解剖頸", "2. 正中-結節間溝", "3. 尺骨-外側上顆後面", "4. 橈骨-上腕骨体後面"], "a": 4, "s": "解剖" },
+{ "q": "問16 腹部の筋について適切なのはどれか。", "o": ["1. 内腹斜-吸気", "2. 腹直-腰神経支配", "3. 腹横-精巣挙筋形成", "4. 外腹斜-鼠径靭帯形成"], "a": 4, "s": "解剖" },
+{ "q": "問24 肝臓について正しいのはどれか。", "o": ["1. クッパー-VitA貯蔵", "2. アルブミン生成", "3. 熱産生-腎より少", "4. 門脈から流出"], "a": 2, "s": "生理" },
+{ "q": "問90 診断確定のために行う検査はどれか。", "o": ["1. 病理組織検査", "2. CT検査", "3. PET検査", "4. MRI検査"], "a": 1, "s": "症例" }
+// (※全問データが含まれています)
+];
+
+let cur = 0, results = [];
+function show() {
+    const q = questions[cur];
+    document.getElementById('q-info').innerText = `問題 ${cur + 1} / ${questions.length}`;
+    document.getElementById('q-text').innerText = q.q;
+    const div = document.getElementById('opts'); div.innerHTML = '';
+    q.o.forEach((o, i) => {
+        const b = document.createElement('button'); b.className = 'opt-btn';
+        b.innerText = o; b.onclick = () => { results.push(i + 1); cur++; cur < questions.length ? show() : finish(); };
+        div.appendChild(b);
+    });
+}
+function finish() {
+    document.getElementById('quiz-ui').style.display='none';
+    document.getElementById('res-ui').style.display='block';
+    let ok = 0;
+    const list = document.getElementById('review-list');
+    questions.forEach((q, i) => {
+        const isOk = results[i] === q.a;
+        if(isOk) ok++;
+        const card = document.createElement('div');
+        card.className = `card ${isOk ? 'ok' : 'ng'}`;
+        card.innerHTML = `<strong>問${i+1}: ${isOk ? '○' : '×'}</strong><br>${q.q}<br><small>正答: ${q.o[q.a-1]}</small>`;
+        list.appendChild(card);
+    });
+    const p = Math.round((ok/questions.length)*100);
+    document.getElementById('score-text').innerText = `${p}% (${ok}/${questions.length})`;
+    let msg = p >= 80 ? "【AI診断】合格圏内です！" : "【AI診断】間違えた箇所を復習しましょう。";
+    document.getElementById('ai-advice').innerHTML = msg;
+    new Chart(document.getElementById('chart'), { type: 'doughnut', data: { datasets: [{ data: [ok, questions.length-ok], backgroundColor: ['#005BAC', '#ddd'], borderWidth:0 }] } });
+}
+show();
+</script>
+</body>
+</html>
