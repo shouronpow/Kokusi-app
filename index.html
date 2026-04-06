@@ -16,6 +16,7 @@ body { font-family: sans-serif; background: #f5f7f9; margin: 0; padding: 15px; d
 .card { padding: 15px; margin-bottom: 10px; border-radius: 10px; border-left: 8px solid; text-align: left; font-size: 0.9rem; }
 .ok { background: #d4edda; border-color: #28a745; color: #155724; }
 .ng { background: #f8d7da; border-color: #dc3545; color: #721c24; }
+.advice { background:#eef; padding:20px; border-radius:15px; margin:20px 0; border-left:8px solid #005BAC; font-weight:bold; color:#005BAC; text-align:left; line-height:1.6; }
 </style>
 </head>
 <body>
@@ -30,12 +31,12 @@ body { font-family: sans-serif; background: #f5f7f9; margin: 0; padding: 15px; d
 <h1 style="color:var(--blue);">演習結果</h1>
 <div style="width:200px; height:200px; margin:auto;"><canvas id="chart"></canvas></div>
 <h2 id="score-text" style="font-size: 2rem; margin: 15px 0;"></h2>
+<div id="ai-advice"></div>
 <div id="review-list"></div>
 <button onclick="location.reload()" style="margin-top:25px; padding:18px 45px; background:var(--blue); color:white; border:none; border-radius:35px; font-size:1.3rem; font-weight:bold; cursor:pointer;">最初から解く</button>
 </div>
 </div>
 <script>
-// PDFおよび正答肢表に基づいた完全データ
 const questions = [
 { "id": 1, "question": "我が国の2023年度の指定難病において、受給者証所持者数が最も多いのはどれか。", "options": ["パーキンソン病", "潰瘍性大腸炎", "全身性エリテマトーデス", "クローン病"], "answer": 1 },
 { "id": 2, "question": "あはき施術者の倫理について正しいのはどれか。", "options": ["施術者本位の施術", "施術者の利益優先", "患者家族の要求優先", "患者の苦痛への共感"], "answer": 4 },
@@ -105,7 +106,7 @@ const questions = [
 { "id": 66, "question": "変形性股関節症の一般的な治療法として適切でないのはどれか。", "options": ["ギプス固定", "人工股関節全置換術", "生活指導", "薬物治療"], "answer": 1 },
 { "id": 67, "question": "血友病について正しいのはどれか。", "options": ["男児よりも女児に多い。", "X連鎖性潜性遺伝する。", "血液凝固第VIII因子の欠乏に起因する。", "皮膚表面の紫斑が主症状である。"], "answer": 2 },
 { "id": 68, "question": "痛風について正しいのはどれか。", "options": ["胆石を合併しやすい。", "手関節の腫脹が特徴的所見である。", "非飲酒者でも発症する。", "尿酸結晶が末梢神経に沈着して痛みを生じる。"], "answer": 3 },
-{ "id": 69, "question": "一過性脳虚血発作について正しいのはどれか。", "options": ["脳卒中の一つである。", "発作は24時間以内に消失する。", "MRI検査で急性梗塞巣を認める。", "薬物療法は不要である。"], "answer": 1 },
+{ "id": 69, "question": "一過性脳虚血発作について正しいのはどれか。", "options": ["脳卒中の一つである。", "発作は24時間以内に消失する。", "MRI検査で急性梗塞巣を認める。", "薬物療法は不要である。", "answer": 1 },
 { "id": 70, "question": "レビー小体型認知症に最も特徴的なのはどれか。", "options": ["近所の散歩中に迷子になる。", "現実味のある幻視がみえる。", "物を盗られたという妄妄がある。", "自動販売機での切符購入が困難になる。"], "answer": 2 },
 { "id": 71, "question": "痙縮について正しいのはどれか。", "options": ["パーキンソン病に特有の症状である。", "歯車現象を生じる。", "上位運動ニューロン障害によって生じる。", "関節可動域の拡大が特徴である。"], "answer": 3 },
 { "id": 72, "question": "二分脊椎について正しいのはどれか。", "options": ["先天的に発症する脊髄疾患である。", "水頭症を合併することはない。", "病変が高位になるほど障害は軽度となる。", "皮膚病変を合併することはない。"], "answer": 1 },
@@ -119,71 +120,18 @@ const questions = [
 { "id": 80, "question": "高齢者の外傷性脊髄損傷の受傷原因として最も多いのはどれか。", "options": ["スポーツ", "交通事故", "労働災害", "転倒・転落"], "answer": 4 },
 { "id": 81, "question": "閉塞性換気障害を呈する疾患はどれか。", "options": ["高度肥満症", "気管支喘息", "間質性肺炎", "重症筋無力症"], "answer": 2 },
 { "id": 82, "question": "ICFの生活機能に含まれないのはどれか。", "options": ["疾病", "心身機能・身体構造", "活動", "参加"], "answer": 1 },
-{ "id": 83, "question": "17歳の女子バレーボール選手。スパイクの練習量が多くなり、左下腿中央部の痛みと腫脹を自覚。近医で、左脛骨中央に著明な圧痛とエックス線側面像で骨皮質の肥厚を認めた。体温は正常、安静時および夜間の痛みはない。疾患として最も考えられるのはどれか。", "options": ["類骨骨腫", "疲労骨折", "化膿性骨髄炎", "シンスプリント"], "answer": 2 },
-{ "id": 84, "question": "（前問の症例）最も適切な対応はどれか。", "options": ["抗菌薬の投与", "骨腫瘍部の切除", "下腿筋群のストレッチング", "スパイク動作の中止"], "answer": 4 },
-{ "id": 85, "question": "66歳の男性。右前頭葉に脳出血を発症し保存治療中。身体麻痺は認められず排泄動作は自立しているが、トイレに行くこと自体を忘れて失禁することがある。高次脳機能障害として最も考えられるのはどれか。", "options": ["半側空間無視", "遂行機能障害", "身体失認", "観念失行"], "answer": 2 },
-{ "id": 86, "question": "（前問の症例）家族が患者に行う対応として最も適切なのはどれか。", "options": ["本人の自主性を尊重して見守る。", "繰り返し口頭で指示する。", "手順を見える形で示して一緒に確認する。", "刺激を与えるため毎日予定を変える。"], "answer": 3 },
-{ "id": 87, "question": "58歳の女性。6日前から右肩のこり感があった。昨日から右肩甲骨内側の痛みと右前腕橈側から母指・示指のしびれが出現した。右上肢の挙上障害はなく、衣服のボタンかけにも異常はない。下肢に症状はない。神経学的所見で正しいのはどれか。", "options": ["ワルテンベルグ反射陽性", "指鼻試験陽性", "バレー徴候陽性", "腕橈骨筋腱反射減弱"], "answer": 4 },
-{ "id": 88, "question": "（前問の症例）本患者の筋力評価で最も適切なのはどれか。", "options": ["右三角筋 MMT2", "右上腕二頭筋 MMT2", "右手関節背屈力低下", "右小指外転筋力低下"], "answer": 3 },
-{ "id": 89, "question": "38歳の女性。身長160cm、体重55kg、胸囲88cm。毎年マンモグラフィを受けており、6か月前の検診でも異常を指摘されなかった。入浴時、左乳房に雀卵大のしこりがあることに気づいた。最初に行うべき検査で最も適切なのはどれか。", "options": ["マンモグラフィ", "超音波検査", "性ホルモン量測定", "腫瘍マーカー測定"], "answer": 2 },
-{ "id": 90, "question": "（前問の症例）診断確定のために行う検査はどれか。", "options": ["病理組織検査", "CT検査", "PET検査", "MRI検査"], "answer": 1 }
+{ "id": 83, "question": "17歳の女子バレーボール選手。左下腿中央部の痛みと腫脹を自覚。近医で左脛骨中央に著明な圧痛と骨皮質の肥厚を認めた。疾患はどれか。", "options": ["類骨骨腫", "疲労骨折", "化膿性骨髄炎", "シンスプリント"], "answer": 2 },
+{ "id": 84, "question": "前問の症例で、最も適切な対応はどれか。", "options": ["抗菌薬の投与", "骨腫瘍部の切除", "下腿筋群のストレッチング", "スパイク動作の中止"], "answer": 4 },
+{ "id": 85, "question": "66歳の男性。右前頭葉に脳出血。トイレに行くこと自体を忘れて失禁することがある。考えられるのはどれか。", "options": ["半側空間無視", "遂行機能障害", "身体失認", "観念失行"], "answer": 2 },
+{ "id": 86, "question": "前問の症例で、家族が患者に行う対応として最も適切なのはどれか。", "options": ["見守る。", "繰り返し口頭指示。", "手順を見える形で示して一緒に確認。", "毎日予定を変える。"], "answer": 3 },
+{ "id": 87, "question": "58歳の女性。右肩甲骨内側の痛みと右前腕橈側から母指・示指のしびれが出現した。神経学的所見で正しいのはどれか。", "options": ["ワルテンベルグ反射陽性", "指鼻試験陽性", "バレー徴候陽性", "腕橈骨筋腱反射減弱"], "answer": 4 },
+{ "id": 88, "question": "前問の症例で、本患者の筋力評価で最も適切なのはどれか。", "options": ["右三角筋 MMT2", "右上腕二頭筋 MMT2", "右手関節背屈力低下", "右小指外転筋力低下"], "answer": 3 },
+{ "id": 89, "question": "38歳の女性。左乳房にしこりがあることに気づいた。最初に行うべき検査で最も適切なのはどれか。", "options": ["マンモグラフィ", "超音波検査", "性ホルモン量測定", "腫瘍マーカー測定"], "answer": 2 },
+{ "id": 90, "question": "前問の症例で、診断確定のために行う検査はどれか。", "options": ["病理組織検査", "CT検査", "PET検査", "MRI検査"], "answer": 1 }
 ];
 
 let current = 0; let results = [];
-function show(let current = 0; let results = [];
-
 function show() {
-    const q = questions[current];
-    if(!q) return;
-    document.getElementById('q-info').innerText = `問題 ${current + 1} / ${questions.length}`;
-    document.getElementById('q-text').innerText = q.question;
-    const container = document.getElementById('opts');
-    container.innerHTML = '';
-    q.options.forEach((opt, i) => {
-        const btn = document.createElement('button');
-        btn.className = 'opt-btn';
-        btn.innerText = `${i + 1}. ${opt}`;
-        btn.onclick = () => { results.push(i + 1); current++; current < questions.length ? show() : finish(); };
-        container.appendChild(btn);
-    });
-}
-
-function finish() {
-    document.getElementById('quiz-ui').style.display='none';
-    document.getElementById('res-ui').style.display='block';
-    let correct = 0;
-    const list = document.getElementById('review-list');
-    
-    questions.forEach((q, i) => {
-        const isOk = results[i] === q.answer;
-        if(isOk) correct++;
-        const card = document.createElement('div');
-        card.className = `card ${isOk ? 'ok' : 'ng'}`;
-        card.innerHTML = `<strong>問${i+1}: ${isOk ? '○' : '×'}</strong><br>${q.question}<br><small>正答: ${q.options[q.answer-1]}</small>`;
-        list.appendChild(card);
-    });
-
-    const percent = Math.round((correct/questions.length)*100);
-    document.getElementById('score-text').innerText = `${percent}% (${correct}/${questions.length})`;
-    
-    // --- ここからAI診断アドバイス復活パーツ ---
-    const adviceBox = document.createElement('div');
-    adviceBox.style.cssText = "background:#eef; padding:20px; border-radius:15px; margin:20px 0; border-left:8px solid #005BAC; font-weight:bold; color:#005BAC; text-align:left; line-height:1.6;";
-    
-    let aiMsg = "";
-    if(percent >= 80) aiMsg = "【AI診断：合格圏内】素晴らしい！基礎が完璧に固まっています。この調子で午後の問題にも挑戦しましょう！";
-    else if(percent >= 60) aiMsg = "【AI診断：あと一歩】合格ラインまでわずか！間違えた「×」の問題を重点的に復習すれば、確実に合格圏内です。";
-    else aiMsg = "【AI診断：基礎強化が必要】焦らず、間違えた問題を教科書で再確認しましょう。一つずつの積み重ねが合格への近道です！";
-    
-    adviceBox.innerHTML = `💡 AI診断アドバイス：<br>${aiMsg}`;
-    document.getElementById('score-text').after(adviceBox);
-    // --- ここまで ---
-
-    new Chart(document.getElementById('chart'), { type: 'doughnut', data: { datasets: [{ data: [correct, questions.length-correct], backgroundColor: ['#005BAC', '#ddd'], borderWidth:0 }] }, options: { cutout:'75%' } });
-}
-
-show();
-) {
 const q = questions[current];
 if(!q) return;
 document.getElementById('q-info').innerText = `問題 ${current + 1} / ${questions.length}`;
@@ -213,6 +161,15 @@ list.appendChild(card);
 });
 const percent = Math.round((correct/questions.length)*100);
 document.getElementById('score-text').innerText = `${percent}% (${correct}/${questions.length})`;
+
+const adviceArea = document.getElementById('ai-advice');
+adviceArea.className = 'advice';
+let msg = "";
+if(percent >= 80) msg = "【AI診断：合格圏内】素晴らしい！基礎が完璧に固まっています。この調子で頑張りましょう！";
+else if(percent >= 60) msg = "【AI診断：あと一歩】合格ラインまでわずか！間違えた問題を重点的に復習しましょう。";
+else msg = "【AI診断：基礎強化が必要】焦らず間違えた問題を教科書で再確認しましょう！";
+adviceArea.innerHTML = `💡 AI診断アドバイス：<br>${msg}`;
+
 new Chart(document.getElementById('chart'), { type: 'doughnut', data: { datasets: [{ data: [correct, questions.length-correct], backgroundColor: ['#005BAC', '#ddd'], borderWidth:0 }] }, options: { cutout:'75%' } });
 }
 show();
