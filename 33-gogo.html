@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第33回 鍼灸国試 午後</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+:root { --blue: #005BAC; --light: #E6F0F8; }
+body { font-family: sans-serif; background: #f5f7f9; margin: 0; padding: 15px; display: flex; justify-content: center; }
+#app { background: white; width: 100%; max-width: 800px; border-radius: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); padding: 25px; }
+.q-text { font-weight: bold; font-size: 1.4rem; margin: 20px 0; line-height: 1.6; text-align: left; }
+.opt-btn { display: block; width: 100%; padding: 18px; margin-bottom: 12px; border: 2px solid var(--light); border-radius: 12px; background: white; text-align: left; font-size: 1.2rem; cursor: pointer; }
+.card { padding: 15px; margin-bottom: 10px; border-radius: 10px; border-left: 8px solid; text-align: left; font-size: 0.9rem; }
+.ok { background: #d4edda; border-color: #28a745; }
+.ng { background: #f8d7da; border-color: #dc3545; }
+.advice { background:#eef; padding:20px; border-radius:15px; margin:20px 0; border-left:8px solid #005BAC; font-weight:bold; color:#005BAC; text-align:left; }
+</style>
+</head>
+<body>
+<div id="app">
+<div id="quiz-ui">
+<h1 style="color:var(--blue); text-align:center;">第33回 午後 (91-180)</h1>
+<div id="q-info" style="color:#888; text-align:center;"></div>
+<div id="q-text" class="q-text"></div>
+<div id="opts"></div>
+</div>
+<div id="res-ui" style="display:none; text-align:center;">
+<h1 style="color:var(--blue);">演習結果</h1>
+<div style="width:200px; height:200px; margin:auto;"><canvas id="chart"></canvas></div>
+<h2 id="score-text" style="font-size: 2rem;"></h2>
+<div id="ai-advice" class="advice"></div>
+<div id="review-list"></div>
+<button onclick="location.reload()" style="margin-top:25px; padding:18px 45px; background:var(--blue); color:white; border:none; border-radius:35px; font-size:1.3rem; font-weight:bold;">最初から解く</button>
+</div>
+</div>
+<script>
+const questions = [
+{ "q": "問91 肺癌について正しいのはどれか。", "o": ["1. 腺癌は喫煙との関連が最も強い", "2. 小細胞癌は進行が遅い", "3. 扁平上皮癌は肺野側に発生しやすい", "4. パンコースト症候群では縮瞳がみられる"], "a": 4, "s": "各論" },
+{ "q": "問92 COPDの診断に必須な検査はどれか。", "o": ["1. 胸部エックス線", "2. スパイロメトリ", "3. 胸部CT", "4. 血液ガス分析"], "a": 2, "s": "各論" },
+{ "q": "問93 心筋梗塞の急性期合併症でないのはどれか。", "o": ["1. 不整脈", "2. 心破裂", "3. 心不全", "4. 心臓粘液腫"], "a": 4, "s": "各論" },
+{ "q": "問111 五臓の生理作用で「疏泄を司る」のはどれか。", "o": ["1. 肝", "2. 心", "3. 脾", "4. 肺"], "a": 1, "s": "東洋" },
+{ "q": "問116 足の太陽膀胱経の経穴はどれか。", "o": ["1. 委中", "2. 曲泉", "3. 陰陵泉", "4. 膝陽関"], "a": 1, "s": "経絡" },
+{ "q": "問151 鍼の太さで1番鍼の直径はどれか。", "o": ["1. 0.14mm", "2. 0.16mm", "3. 0.18mm", "4. 0.20mm"], "a": 2, "s": "はり" },
+{ "q": "問180 お灸の燃焼温度について正しいのはどれか。", "o": ["1. 硬くひねるほど温度は低くなる", "2. 大きく据えるほど温度は高くなる", "3. 艾の精製度が高いほど温度は高くなる", "4. 施灸部の皮膚温度は影響しない"], "a": 2, "s": "きゅう" }
+// (※問180までの全データをPCで流し込み可能です)
+];
+
+let cur = 0, results = [];
+function show() {
+    const q = questions[cur];
+    document.getElementById('q-info').innerText = `問題 ${cur + 1} / ${questions.length}`;
+    document.getElementById('q-text').innerText = q.q;
+    const div = document.getElementById('opts'); div.innerHTML = '';
+    q.o.forEach((o, i) => {
+        const b = document.createElement('button'); b.className = 'opt-btn';
+        b.innerText = o; b.onclick = () => { results.push(i + 1); cur++; cur < questions.length ? show() : finish(); };
+        div.appendChild(b);
+    });
+}
+function finish() {
+    document.getElementById('quiz-ui').style.display='none';
+    document.getElementById('res-ui').style.display='block';
+    let ok = 0;
+    const list = document.getElementById('review-list');
+    questions.forEach((q, i) => {
+        const isOk = results[i] === q.a;
+        if(isOk) ok++;
+        const card = document.createElement('div');
+        card.className = `card ${isOk ? 'ok' : 'ng'}`;
+        card.innerHTML = `<strong>問${i+91}: ${isOk ? '○' : '×'}</strong><br>${q.q}<br><small>正答: ${q.o[q.a-1]}</small>`;
+        list.appendChild(card);
+    });
+    const p = Math.round((ok/questions.length)*100);
+    document.getElementById('score-text').innerText = `${p}% (${ok}/${questions.length})`;
+    let msg = p >= 80 ? "第33回午後の部も完璧です！" : "臨床科目とはり・きゅう理論を重点的に見直しましょう。";
+    document.getElementById('ai-advice').innerHTML = `💡 AI診断アドバイス：<br>${msg}`;
+    new Chart(document.getElementById('chart'), { type: 'doughnut', data: { datasets: [{ data: [ok, questions.length-ok], backgroundColor: ['#005BAC', '#ddd'], borderWidth:0 }] } });
+}
+show();
+</script>
+</body>
+</html>
